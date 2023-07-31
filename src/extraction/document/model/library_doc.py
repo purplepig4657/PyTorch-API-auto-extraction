@@ -8,5 +8,7 @@ from src.common.model.symbol import Symbol
 
 class LibraryDoc(Library):
 
-    def __init__(self, library_soup: BeautifulSoup):
+    def __init__(self, library_name: Symbol, library_soup: BeautifulSoup):
         pass
+
+    # def __extract_
