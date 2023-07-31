@@ -27,9 +27,6 @@ class Library:
 
     def __str__(self) -> str:
 
-        def str_lambda(x) -> str:
-            return str(x).replace("\'", "").replace("\\", "")
-
-        class_list_str = list(map(str_lambda, self.class_list))
-        function_list_str = list(map(str_lambda, self.function_list))
-        return str_lambda(f"{{ symbol: {self.symbol}, class_list: {class_list_str}, function_list: {function_list_str} }}")
+        class_list_str = list(map(str, self.class_list))
+        function_list_str = list(map(str, self.function_list))
+        return f"{{ symbol: {self.symbol}, class_list: {class_list_str}, function_list: {function_list_str} }}"
