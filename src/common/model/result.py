@@ -4,7 +4,7 @@ from src.common.model.library import Library
 class Result:
     __library_list: list[Library]
 
-    def __init__(self, library_list: list[Library]):
+    def __init__(self, library_list: list[Library]) -> None:
         self.__library_list = library_list
 
     @property
