@@ -9,4 +9,4 @@ class Symbol:
         return self.__name
 
     def __str__(self) -> str:
-        return f"\"{self.name}\""
+        return f"{self.name}"
