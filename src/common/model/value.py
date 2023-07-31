@@ -15,4 +15,7 @@ class Value(Generic[T]):
         return self.__value
 
     def __str__(self) -> str:
-        return f"\"{self.value}\""
+        if type(self.value) == int:
+            return f"{self.value}"
+        else:
+            return f"\"{self.value}\""

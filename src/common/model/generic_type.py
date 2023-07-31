@@ -3,15 +3,15 @@ from src.common.model.type import Type
 
 
 class GenericType(Type):
-    __type_list = list[Type]
+    __generic_list = list[Type]
 
-    def __init__(self, symbol: Symbol, type_list: list[Type]) -> None:
+    def __init__(self, symbol: Symbol, generic_list: list[Type]) -> None:
         super().__init__(symbol)
-        self.__type_list = type_list
+        self.__generic_list = generic_list
 
     @property
-    def type_list(self) -> list[Type]:
-        return self.__type_list
+    def generic_list(self) -> list[Type]:
+        return self.__generic_list
 
     def __str__(self) -> str:
-        return f"{self.symbol}{list(map(str, self.type_list))}"
+        return f"{{ symbol: {self.symbol}, generic_list: {list(map(str, self.generic_list))} }}"
