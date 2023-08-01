@@ -27,6 +27,8 @@ class LibraryDoc(Library):
         super().__init__(library_name, class_list, function_list)
 
     def __extract_function_name_list_and_tag_list(self, soup: BeautifulSoup) -> Tuple[list[Symbol], list[Tag]]:
+        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
+        # No need to delve deeply this code.
         torch_functions: ResultSet[Tag] = soup.select(SelectorStringBuilder(
             class_literal=self.__TORCH_FUNCTION_LITERAL).build()
         )
@@ -42,7 +44,7 @@ class LibraryDoc(Library):
             torch_function_name: str = torch_function_object.get('id')
             name_list.append(Symbol(torch_function_name))
             tag_list.append(torch_function_object)
-        return name_list, tag_list
+        return name_list, torch_functions
 
     # noinspection PyMethodMayBeStatic
     def __extract_functions(self, function_name_list: list[Symbol], function_tag_list: list[Tag]) -> list[Function]:
@@ -52,6 +54,8 @@ class LibraryDoc(Library):
         return function_list
 
     def __extract_class_name_list_and_tag_list(self, soup: BeautifulSoup) -> Tuple[list[Symbol], list[Tag]]:
+        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
+        # No need to delve deeply this code.
         torch_classes: ResultSet[Tag] = soup.select(SelectorStringBuilder(
             class_literal=self.__TORCH_CLASS_LITERAL).build()
         )
@@ -67,7 +71,7 @@ class LibraryDoc(Library):
             torch_class_name: str = torch_class_object.get('id')
             name_list.append(Symbol(torch_class_name))
             tag_list.append(torch_class_object)
-        return name_list, tag_list
+        return name_list, torch_classes
 
     # noinspection PyMethodMayBeStatic
     def __extract_classes(self, class_name_list: list[Symbol], class_tag_list: list[Tag]) -> list[ClassObject]:
