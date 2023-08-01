@@ -22,8 +22,6 @@ class ResultDoc(Result):
         library_name_list, library_url_list = \
             self.__extract_library_name_list_and_url_list(self.__ROOT_URL if root_url is None else root_url)
         library_soup_list: list[BeautifulSoup] = self.__convert_library_url_list_to_soup(library_url_list)
-        for name in library_name_list:
-            print(name)
         library_list: list[Library] = self.__extract_libraries(library_name_list, library_soup_list)
         super().__init__(library_list=library_list)
 
@@ -35,12 +33,14 @@ class ResultDoc(Result):
         ul_tag_list: ResultSet[Tag] = nav_tag.find_all(name="ul", recursive=False)
         api_tag: Tag = ul_tag_list[self.__TORCH_API_MENU_NUMBER]
         library_tags: ResultSet[Tag] = api_tag.find_all(name="li")
+
         url_list: list[str] = list[str]()
         name_list: list[Symbol] = list[Symbol]()
         for library in library_tags:
             a_tag: Tag = library.find(name="a")
             name_list.append(Symbol(a_tag.text))
             url_list.append(self.__ROOT_URL + a_tag.get("href"))
+
         return name_list, url_list
 
     # noinspection PyMethodMayBeStatic
