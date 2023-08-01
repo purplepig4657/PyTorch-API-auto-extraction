@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup, Tag, ResultSet
 from src.common.model.library import Library
 from src.common.model.result import Result
 from src.common.model.symbol import Symbol
+from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
 from src.extraction.document.model.library_doc import LibraryDoc
 from src.extraction.repository.pytorch_html_code_api import PyTorchHtmlCodeApi
 from src.extraction.document.common.selector_string_builder import SelectorStringBuilder
@@ -13,14 +14,13 @@ class ResultDoc(Result):
     __pytorch_html_code_api: PyTorchHtmlCodeApi
 
     # PyTorch documentation traits
-    __ROOT_URL = "https://pytorch.org/docs/stable/"
     __TORCH_MENU_LITERAL = "pytorch-menu"
     __TORCH_API_MENU_NUMBER = 4
 
     def __init__(self, pytorch_html_code_api: PyTorchHtmlCodeApi, root_url: str = None) -> None:
         self.__pytorch_html_code_api = pytorch_html_code_api
         library_name_list, library_url_list = \
-            self.__extract_library_name_list_and_url_list(self.__ROOT_URL if root_url is None else root_url)
+            self.__extract_library_name_list_and_url_list(PyTorchDocConstant.ROOT_URL if root_url is None else root_url)
         library_soup_list: list[BeautifulSoup] = self.__convert_library_url_list_to_soup(library_url_list)
         library_list: list[Library] = self.__extract_libraries(library_name_list, library_soup_list)
         super().__init__(library_list=library_list)
@@ -39,7 +39,7 @@ class ResultDoc(Result):
         for library in library_tags:
             a_tag: Tag = library.find(name="a")
             name_list.append(Symbol(a_tag.text))
-            url_list.append(self.__ROOT_URL + a_tag.get("href"))
+            url_list.append(PyTorchDocConstant.ROOT_URL + a_tag.get("href"))
 
         return name_list, url_list
 
@@ -54,7 +54,7 @@ class ResultDoc(Result):
     ) -> list[Library]:
         library_list: list[Library] = list[Library]()
         for name, soup in zip(library_name_list, library_soup_list):
-            library_list.append(LibraryDoc(name, soup))
+            library_list.append(LibraryDoc(self.__pytorch_html_code_api, name, soup))
         return library_list
 
     # noinspection PyMethodMayBeStatic
