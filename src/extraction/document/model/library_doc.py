@@ -19,8 +19,7 @@ class LibraryDoc(Library):
 
     def __init__(self, pytorch_html_code_api: PyTorchHtmlCodeApi, library_name: Symbol, library_soup: BeautifulSoup):
         self.__pytorch_html_code_api = pytorch_html_code_api
-        # self.__additional_doc_soup = self.__extract_additional_doc_table(library_soup)
-        print("All requests done!")
+        self.__additional_doc_soup = self.__extract_additional_doc_table(library_soup)
         function_name_list, function_tag_list = self.__extract_function_name_list_and_tag_list(library_soup)
         class_name_list, class_tag_list = self.__extract_class_name_list_and_tag_list(library_soup)
 
@@ -87,14 +86,16 @@ class LibraryDoc(Library):
         torch_functions: ResultSet[Tag] = soup.select(
             SelectorStringBuilder(class_literal=PyTorchDocConstant.TORCH_FUNCTION_LITERAL).build()
         )
-        # torch_functions.extend(self.__extract_doc_table_function_tag_list(self.__additional_doc_soup))
+        torch_functions.extend(self.__extract_doc_table_function_tag_list(self.__additional_doc_soup))
         name_list: list[Symbol] = list[Symbol]()
         tag_list: list[Tag] = list[Tag]()
         if len(torch_functions) == 0:
             return name_list, tag_list
         for torch_function in torch_functions:
             torch_function_object: Tag = torch_function.find(
-                attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL}, recursive=False)
+                attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL},
+                recursive=False
+            )
             if torch_function_object is None:
                 raise RuntimeError("Wrong document")
             torch_function_name: str = torch_function_object.get('id')
@@ -116,14 +117,16 @@ class LibraryDoc(Library):
         torch_classes: ResultSet[Tag] = soup.select(
             SelectorStringBuilder(class_literal=PyTorchDocConstant.TORCH_CLASS_LITERAL).build()
         )
-        # torch_classes.extend(self.__extract_doc_table_class_tag_list(self.__additional_doc_soup))
+        torch_classes.extend(self.__extract_doc_table_class_tag_list(self.__additional_doc_soup))
         name_list: list[Symbol] = list[Symbol]()
         tag_list: list[Tag] = list[Tag]()
         if len(torch_classes) == 0:
             return name_list, tag_list
         for torch_class in torch_classes:
             torch_class_object: Tag = torch_class.find(
-                attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL}, recursive=False)
+                attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL},
+                recursive=False
+            )
             if torch_class_object is None:
                 raise RuntimeError("Wrong document")
             torch_class_name: str = torch_class_object.get('id')
