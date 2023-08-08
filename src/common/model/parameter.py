@@ -6,13 +6,13 @@ from src.common.model.value import Value
 
 
 class Parameter:
-    __symbol: Union[Symbol, None]
+    __symbol: Symbol
     __default: Union[Value, None]
     __value_type: Union[Type, None]
     __is_optional: Union[bool, None]
 
     def __init__(
-            self, symbol: Union[Symbol, None],
+            self, symbol: Symbol,
             default: Union[Value, None],
             value_type: Union[Type, None],
             is_optional: Union[bool, None]
@@ -27,15 +27,15 @@ class Parameter:
         return self.__symbol
 
     @property
-    def default(self) -> Value:
+    def default(self) -> Union[Value, None]:
         return self.__default
 
     @property
-    def value_type(self) -> Type:
+    def value_type(self) -> Union[Type, None]:
         return self.__value_type
 
     @property
-    def is_optional(self) -> bool:
+    def is_optional(self) -> Union[bool, None]:
         return self.__is_optional
 
     def __str__(self) -> str:

@@ -10,9 +10,13 @@ class TypeDoc(Type):
         super().__init__(symbol)
 
     @classmethod
-    def from_a_tag(cls, type_tag: Tag):
+    def from_box_a_tag(cls, type_tag: Tag):
         return cls(Symbol("asdf"))
 
     @classmethod
     def from_str(cls, name: str):
         return cls(Symbol(name))
+
+    @classmethod
+    def from_content_a_tag(cls, type_tag: Tag):
+        return cls(Symbol("asdf"))

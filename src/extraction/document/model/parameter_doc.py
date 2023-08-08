@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import reduce
 from typing import Union, Tuple
 
@@ -13,25 +15,34 @@ from src.extraction.document.model.type_doc import TypeDoc
 
 class ParameterDoc(Parameter):
 
-    def __init__(self, symbol: Union[Symbol, None], default: Union[Value, None], value_type: Union[Type, None],
+    def __init__(self, symbol: Symbol, default: Union[Value, None], value_type: Union[Type, None],
                  is_optional: Union[bool, None]):
 
         super().__init__(symbol, default, value_type, is_optional)
 
     @classmethod
-    def from_box(cls, parameter_tag: Tag):
+    def from_box(cls, parameter_tag: Tag) -> ParameterDoc:
         parameter_name, parameter_type, parameter_default_value = cls.__extract_parameter_info_from_box(parameter_tag)
-        print(parameter_name, parameter_type, parameter_default_value)
+        # print(parameter_name, parameter_type, parameter_default_value)
         return cls(parameter_name, parameter_default_value, parameter_type, None)
 
+    @classmethod
+    def from_content(cls, parameter_tag: Tag) -> ParameterDoc:
+        parameter_name, parameter_type, parameter_default_value, parameter_is_optional = \
+            cls.__extract_parameter_info_from_content(parameter_tag)
+        return cls(parameter_name, parameter_type, parameter_default_value, parameter_is_optional)
 
     @classmethod
-    def from_content(cls, parameter_tag: Tag):
-        pass
+    def __extract_parameter_info_from_content(cls, parameter_tag: Tag) \
+            -> Tuple[Symbol, Union[Type, None], Union[Value[str], None], Union[bool, None]]:
+        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
+        # No need to delve deeply this code.
+        parameter_name: str = parameter_tag.find(name="strong").text
+        parameter_a_tag: ResultSet[Tag] = parameter_tag.find_all(name="a")
 
     @classmethod
     def __extract_parameter_info_from_box(cls, parameter_tag: Tag) \
-            -> Tuple[Union[Symbol, None], Union[Type, None], Union[Value[str], None]]:
+            -> Tuple[Symbol, Union[Type, None], Union[Value[str], None]]:
         # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
         # No need to delve deeply this code.
         parameter_info: ResultSet[Tag] = parameter_tag.find_all(
@@ -62,7 +73,7 @@ class ParameterDoc(Parameter):
             parameter_name = Symbol(name)
             type_tag: Tag = parameter_info[1].find(name="a")
             if type_tag is not None:
-                parameter_type = TypeDoc.from_a_tag(type_tag)
+                parameter_type = TypeDoc.from_box_a_tag(type_tag)
             else:
                 type_name: str = parameter_info[1].find(name="span").text
                 parameter_type = TypeDoc.from_str(type_name)
