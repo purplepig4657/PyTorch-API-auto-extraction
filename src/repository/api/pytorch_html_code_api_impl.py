@@ -11,4 +11,9 @@ class PyTorchHtmlCodeApiImpl(PyTorchHtmlCodeApi):
             html: str = response.text
             return html
         else:
-            raise RuntimeError(f"request failed with status code: {response.status_code}")
+            try:
+                raise RuntimeError(f"request failed with status code: {response.status_code}")
+            except RuntimeError:
+                print(f"url: {url}")
+                print(f"status_code: {response.status_code}")
+                return "<html></html>"
