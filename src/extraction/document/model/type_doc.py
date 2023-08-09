@@ -18,5 +18,5 @@ class TypeDoc(Type):
         return cls(Symbol(name))
 
     @classmethod
-    def from_content_a_tag(cls, type_tag: Tag):
+    def from_content_type_list(cls, type_list: list[str]):
         return cls(Symbol("asdf"))
