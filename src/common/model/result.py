@@ -16,4 +16,4 @@ class Result:
             return str(x).replace("\'", "").replace("\\", "")
 
         library_list_str = list(map(str_lambda, self.library_list))
-        return str_lambda(f"{{ library_list: {library_list_str} }}")
+        return str_lambda(f"{{ \"library_list\": {library_list_str} }}")

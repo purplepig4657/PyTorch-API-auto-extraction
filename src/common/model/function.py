@@ -28,5 +28,5 @@ class Function:
         return self.__return_type
 
     def __str__(self) -> str:
-        return f"{{ symbol: {self.symbol}, param_list: {list(map(str, self.param_list))}, " \
-               f"return_type: {self.return_type} }}"
+        return f"{{ \"symbol\": {self.symbol}, \"param_list\": {list(map(str, self.param_list))}, " \
+               f"\"return_type\": {self.return_type} }}"

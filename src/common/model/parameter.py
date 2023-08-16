@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional
 
 from src.common.model.symbol import Symbol
@@ -31,5 +32,36 @@ class Parameter:
     def value_type(self) -> Optional[Type]:
         return self.__value_type
 
+    def merge(self, other_parameter: Parameter) -> Parameter:
+        if self.symbol != other_parameter.symbol:
+            print(self.symbol, other_parameter.symbol)
+            raise RuntimeError("Parameters' symbol are not matched.")
+
+        result_symbol: Symbol = self.symbol
+        result_default: Optional[Value] = None
+        result_value_type: Optional[Type] = None
+
+        # default
+        if self.default is None:
+            result_default = other_parameter.default
+        elif other_parameter.default is None:
+            result_default = self.default
+        else:
+            if self.default != other_parameter.default:
+                print("Warning: parameters' default value are not matched.")
+            result_default = self.default
+
+        # type
+        if self.value_type is None:
+            result_value_type = other_parameter.value_type
+        elif other_parameter.value_type is None:
+            result_value_type = self.value_type
+        else:
+            if self.value_type != other_parameter.value_type:
+                print("Warning: parameters' default value are not matched.")
+            result_value_type = self.value_type
+
+        return Parameter(result_symbol, result_default, result_value_type)
+
     def __str__(self) -> str:
-        return f"{{symbol: {self.symbol}, default: {self.default}, value_type: {self.value_type} }}"
+        return f"{{ \"symbol\": {self.symbol}, \"default\": {self.default}, \"value_type\": {self.value_type} }}"

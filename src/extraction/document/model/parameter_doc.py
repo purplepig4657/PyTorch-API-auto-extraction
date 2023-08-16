@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from functools import reduce
 from typing import Tuple, Optional
 
@@ -22,15 +23,17 @@ class ParameterDoc(Parameter):
     @classmethod
     def from_box(cls, parameter_tag: Tag) -> ParameterDoc:
         parameter_name, parameter_type, parameter_default_value = cls.__extract_parameter_info_from_box(parameter_tag)
-        # print(parameter_name, parameter_type, parameter_default_value)
+        # print("## from box")
+        # print(parameter_name, parameter_default_value, parameter_type)
         return cls(parameter_name, parameter_default_value, parameter_type)
 
     @classmethod
     def from_content(cls, parameter_tag: Tag) -> ParameterDoc:
         parameter_name, parameter_type, parameter_default_value = \
             cls.__extract_parameter_info_from_content(parameter_tag)
-        print(parameter_name, parameter_type, parameter_default_value)
-        return cls(parameter_name, parameter_type, parameter_default_value)
+        # print("## from content")
+        # print(parameter_name, parameter_default_value, parameter_type)
+        return cls(parameter_name, parameter_default_value, parameter_type)
 
     @classmethod
     def __extract_parameter_info_from_content(cls, parameter_tag: Tag) \
@@ -57,11 +60,26 @@ class ParameterDoc(Parameter):
         for text in parameter_type_list:
             if "default" in text:
                 default_value = text.replace("default", "").replace("=", "").strip()
+                parameter_type_list.remove(text)
+                break
+
+        match = re.search(r'\((.*)\)', parameter_text_list[0])
 
         parameter_symbol: Symbol = Symbol(parameter_name)
-        parameter_type = TypeDoc.from_content_type_list(parameter_type_list)
+        if match:
+            type_str: str = match.group(1).split(", default")[0]
+            type_str = type_str.replace("(", "[")
+            type_str = type_str.replace(")", "]")
+            parameter_type = TypeDoc.from_content_type_str(type_str=type_str)
+        else:
+            print("Warning: There is no type in content")
         if default_value is not None:
             parameter_default = Value[str](default_value)
+
+        if parameter_default is None:
+            parameter_default = Value("None")
+        if parameter_type is None:
+            parameter_type = Type(Symbol("None"))
 
         return parameter_symbol, parameter_type, parameter_default
 
@@ -81,6 +99,9 @@ class ParameterDoc(Parameter):
 
         if len(parameter_info) == 0:
             # There is no information of parameter.
+            parameter_name = Symbol("*")
+            parameter_type = Type(Symbol("None"))
+            parameter_default_value = Value("None")
             return parameter_name, parameter_type, parameter_default_value
         if len(parameter_info) == 1:
             # There is only name, no type.
@@ -109,7 +130,7 @@ class ParameterDoc(Parameter):
         )
 
         if parameter_default_value_tag is not None:
-            all_span: ResultSet[Tag] = parameter_info[0].find_all(name="span")
+            all_span: ResultSet[Tag] = parameter_default_value_tag.find_all(name="span")
             if len(all_span) > 1:
                 print("Warning: invalid doc, several text tag.")
             value: str = reduce(lambda acc, cur: acc + cur.text, all_span, "")
@@ -120,5 +141,10 @@ class ParameterDoc(Parameter):
             parameter_name = Symbol(name)
             parameter_default_value = Value(default_value)
             print("Warning: invalid doc, default value was not divided tag.")
+
+        if parameter_default_value is None:
+            parameter_default_value = Value("None")
+        if parameter_type is None:
+            parameter_type = Type(Symbol("None"))
 
         return parameter_name, parameter_type, parameter_default_value

@@ -13,5 +13,14 @@ class UnionType(Type):
     def union_list(self) -> list[Type]:
         return self.__union_list
 
+    def __eq__(self, other: Type) -> bool:
+        if type(other) == "UnionType":
+            return False
+        other: UnionType = other
+        for t in self.union_list:
+            if t not in other.union_list:
+                return False
+        return True
+
     def __str__(self) -> str:
-        return f"{{ symbol: {self.symbol}, union_list: {list(map(str, self.union_list))} }}"
+        return f"{{\"symbol\": {self.symbol}, \"union_list\": {list(map(str, self.union_list))}}}"

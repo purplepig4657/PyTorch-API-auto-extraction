@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Union, TypeVar, Generic
 
 
@@ -13,6 +14,12 @@ class Value(Generic[T]):
     @property
     def value(self) -> T:
         return self.__value
+
+    def __eq__(self, other: Value) -> bool:
+        return self.value == other.value
+
+    def __ne__(self, other: Value) -> bool:
+        return not self.__eq__(other)
 
     def __str__(self) -> str:
         if type(self.value) == int:

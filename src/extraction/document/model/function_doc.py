@@ -1,9 +1,12 @@
+from typing import Optional
+
 from bs4 import Tag, ResultSet
 
 from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
 from src.common.model.function import Function
 from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
+from src.common.model.type import Type
 from src.extraction.document.model.parameter_doc import ParameterDoc
 
 
@@ -16,6 +19,47 @@ class FunctionDoc(Function):
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(function_tag)
         parameter_list_from_content: list[Parameter] = \
             self.__extract_parameter_list_from_content(parameter_list_from_content)
+
+        result_parameter_list: list[Parameter] = list[Parameter]()
+
+        if len(parameter_list_from_box) != len(parameter_list_from_content):
+            print("Warning: parameter count doesn't match.")
+
+        while len(parameter_list_from_box) > 0:
+            box_parameter: Parameter = parameter_list_from_box[0]
+            parameter_list_from_box.pop(0)
+            cont_parameter: Optional[Parameter] = None
+
+            for i in range(len(parameter_list_from_content)):
+                if parameter_list_from_content[i].symbol == box_parameter.symbol:
+                    cont_parameter = parameter_list_from_content[i]
+                    parameter_list_from_content.pop(i)
+                    break
+
+            if cont_parameter is None:
+                print(f"Warning: unmatched parameter, {box_parameter.symbol}")
+                result_parameter_list.append(box_parameter)
+            else:
+                result_parameter_list.append(cont_parameter.merge(box_parameter))
+
+        while len(parameter_list_from_content) > 0:
+            cont_parameter: Parameter = parameter_list_from_content[0]
+            parameter_list_from_content.pop(0)
+            box_parameter: Optional[Parameter] = None
+
+            for i in range(len(parameter_list_from_box)):
+                if parameter_list_from_box[i].symbol == cont_parameter.symbol:
+                    box_parameter = parameter_list_from_box[i]
+                    parameter_list_from_box.pop(i)
+                    break
+
+            if box_parameter is None:
+                print(f"Warning: unmatched parameter, {cont_parameter.symbol}")
+                result_parameter_list.append(cont_parameter)
+            else:
+                result_parameter_list.append(cont_parameter.merge(box_parameter))
+
+        super().__init__(function_name, result_parameter_list, Type(Symbol("None")))
 
     # noinspection PyMethodMayBeStatic
     def __extract_parameter_tag_list_from_box(self, function_tag: Tag) -> list[Tag]:
