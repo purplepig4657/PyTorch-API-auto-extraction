@@ -14,6 +14,7 @@ from src.extraction.document.model.parameter_doc import ParameterDoc
 class ClassObjectDoc(ClassObject):
 
     def __init__(self, class_object_name: Symbol, class_object_tag: Tag):
+        print(class_object_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(class_object_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(class_object_tag)
@@ -100,32 +101,58 @@ class ClassObjectDoc(ClassObject):
             attrs={'class', "field-odd"},
             recursive=False
         )
+
         content_items.extend(torch_content_object.find_all(attrs={'class', "field-even"}, recursive=False))
+
         parameter_item_index: int = -1
         for i in range(0, len(content_items), 2):
             if 'Parameters' in content_items[i].text:
                 parameter_item_index = i
                 break
 
-        if parameter_item_index < 0:
-            return list[Tag]()
+        keyword_arguments_item_index: int = -1
+        for i in range(0, len(content_items), 2):
+            if 'Keyword Arguments' in content_items[i].text:
+                keyword_arguments_item_index = i
+                break
 
-        # Parameter list is item next sibling of title item.
-        parameter_content_list_item: Tag = content_items[parameter_item_index + 1]
+        tag_list: list[Tag] = list[Tag]()
+        parameter_tag_list: list[Tag] = list[Tag]()
+        keyword_arguments_tag_list: list[Tag] = list[Tag]()
 
-        parameter_content_list_tag: Tag = parameter_content_list_item.find(name="ul", recursive=False)
-        parameter_tag_list: list[Tag]
-        if parameter_content_list_tag is None:
-            parameter_tag_list = list[Tag](parameter_content_list_item)
-        else:
-            parameter_tag_list = list(map(
-                lambda x: x.find(name="p", recursive=False),
-                parameter_content_list_tag.find_all(name="li", recursive=False)
-            ))
+        if parameter_item_index >= 0:
+            # Parameter list is item next sibling of title item.
+            parameter_content_list_item: Tag = content_items[parameter_item_index + 1]
 
-        parameter_tag_list: list[Tag] = [item for item in parameter_tag_list if not isinstance(item, str)]
+            parameter_content_list_tag: Tag = parameter_content_list_item.find(name="ul", recursive=False)
+            if parameter_content_list_tag is None:
+                parameter_tag_list = list[Tag](parameter_content_list_item)
+            else:
+                parameter_tag_list = list(map(
+                    lambda x: x.find(name="p", recursive=False),
+                    parameter_content_list_tag.find_all(name="li", recursive=False)
+                ))
 
-        return parameter_tag_list
+        if keyword_arguments_item_index >= 0:
+            # Parameter list is item next sibling of title item.
+            keyword_arguments_content_list_item: Tag = content_items[keyword_arguments_item_index + 1]
+
+            keyword_arguments_content_list_tag: Tag = \
+                keyword_arguments_content_list_item.find(name="ul", recursive=False)
+            if keyword_arguments_content_list_tag is None:
+                keyword_arguments_tag_list = list[Tag](keyword_arguments_content_list_item)
+            else:
+                keyword_arguments_tag_list = list(map(
+                    lambda x: x.find(name="p", recursive=False),
+                    keyword_arguments_content_list_tag.find_all(name="li", recursive=False)
+                ))
+
+        tag_list.extend(parameter_tag_list)
+        tag_list.extend(keyword_arguments_tag_list)
+
+        tag_list: list[Tag] = [item for item in tag_list if not isinstance(item, str)]
+
+        return tag_list
 
     # noinspection PyMethodMayBeStatic
     def __extract_parameter_list_from_content(self, parameter_tag_list: list[Tag]) -> list[Parameter]:

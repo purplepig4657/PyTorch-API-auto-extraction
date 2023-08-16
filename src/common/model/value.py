@@ -11,6 +11,10 @@ class Value(Generic[T]):
     def __init__(self, value: T) -> None:
         self.__value = value
 
+    @classmethod
+    def none_value(cls) -> Value:
+        return cls("None")
+
     @property
     def value(self) -> T:
         return self.__value

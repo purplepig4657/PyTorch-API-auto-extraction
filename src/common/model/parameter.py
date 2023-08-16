@@ -42,9 +42,9 @@ class Parameter:
         result_value_type: Optional[Type] = None
 
         # default
-        if self.default is None:
+        if self.default is None or self.default == Value.none_value():
             result_default = other_parameter.default
-        elif other_parameter.default is None:
+        elif other_parameter.default is None or other_parameter.default == Value.none_value():
             result_default = self.default
         else:
             if self.default != other_parameter.default:
@@ -52,14 +52,7 @@ class Parameter:
             result_default = self.default
 
         # type
-        if self.value_type is None:
-            result_value_type = other_parameter.value_type
-        elif other_parameter.value_type is None:
-            result_value_type = self.value_type
-        else:
-            if self.value_type != other_parameter.value_type:
-                print("Warning: parameters' default value are not matched.")
-            result_value_type = self.value_type
+        result_value_type = self.value_type.merge(other_parameter.value_type)
 
         return Parameter(result_symbol, result_default, result_value_type)
 

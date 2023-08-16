@@ -16,7 +16,13 @@ class TypeDoc(Type):
 
     @classmethod
     def from_box_a_tag(cls, type_tag: Tag):
-        return cls(Symbol("asdf"))
+        try:
+            parse_tree = cls.type_parser.parse(type_tag.text)
+        except Exception:
+            print("Warning: type that in content parsing error.")
+            return Type(Symbol("None"))
+        result: Type = cls.parse_tree_transformer.transform(parse_tree)
+        return result
 
     @classmethod
     def from_str(cls, name: str):
@@ -30,5 +36,4 @@ class TypeDoc(Type):
             print("Warning: type that in content parsing error.")
             return Type(Symbol("None"))
         result: Type = cls.parse_tree_transformer.transform(parse_tree)
-        print(result)
         return result
