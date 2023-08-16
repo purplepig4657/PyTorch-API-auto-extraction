@@ -1,13 +1,15 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from bs4 import Tag, ResultSet
 
 from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
 from src.common.model.class_object import ClassObject
+from src.common.model.method import Method
 from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
+from src.extraction.document.model.method_doc import MethodDoc
 from src.extraction.document.model.parameter_doc import ParameterDoc
 
 
@@ -20,6 +22,9 @@ class ClassObjectDoc(ClassObject):
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(class_object_tag)
         parameter_list_from_content: list[Parameter] = \
             self.__extract_parameter_list_from_content(parameter_list_from_content)
+
+        method_name_list, method_tag_list = self.__extract_method_name_list_and_tag_list(class_object_tag)
+        method_list: list[Method] = self.__extract_method_list(method_name_list, method_tag_list)
 
         result_parameter_list: list[Parameter] = list[Parameter]()
 
@@ -60,7 +65,7 @@ class ClassObjectDoc(ClassObject):
             else:
                 result_parameter_list.append(cont_parameter.merge(box_parameter))
 
-        super().__init__(class_object_name, result_parameter_list, [])
+        super().__init__(class_object_name, result_parameter_list, method_list)
 
     # noinspection PyMethodMayBeStatic
     def __extract_parameter_tag_list_from_box(self, class_object_tag: Tag) -> list[Tag]:
@@ -163,3 +168,32 @@ class ClassObjectDoc(ClassObject):
             parameter_list.append(ParameterDoc.from_content(parameter_tag))
         return parameter_list
 
+    # noinspection PyMethodMayBeStatic
+    def __extract_method_name_list_and_tag_list(self, class_object_tag: Tag) -> Tuple[list[Symbol], list[Tag]]:
+        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
+        # No need to delve deeply this code.
+        class_content: Tag = class_object_tag.find(name="dd", recursive=False)
+        method_tag_list: list[Tag] = class_content.find_all(
+            attrs={'class': PyTorchDocConstant.TORCH_METHOD_LITERAL},
+            recursive=False
+        )
+        name_list: list[Symbol] = list[Symbol]()
+        if len(method_tag_list) == 0:
+            return name_list, method_tag_list
+        for torch_method in method_tag_list:
+            torch_method_object: Tag = torch_method.find(
+                attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL},
+                recursive=False
+            )
+            if torch_method_object is None:
+                raise RuntimeError("Wrong document")
+            torch_method_name: str = torch_method_object.get('id')
+            name_list.append(Symbol(torch_method_name))
+        return name_list, method_tag_list
+
+    # noinspection PyMethodMayBeStatic
+    def __extract_method_list(self, method_name_list: list[Symbol], method_tag_list: list[Tag]) -> list[Method]:
+        method_list: list[Method] = list[Method]()
+        for name, tag in zip(method_name_list, method_tag_list):
+            method_list.append(MethodDoc(name, tag))
+        return method_list

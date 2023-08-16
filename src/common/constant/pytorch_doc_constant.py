@@ -2,6 +2,7 @@ class PyTorchDocConstant:
     # PyTorch documentation traits
     TORCH_CLASS_LITERAL = "py class"
     TORCH_FUNCTION_LITERAL = "py function"
+    TORCH_METHOD_LITERAL = "py method"
     TORCH_OBJECT_LITERAL = "sig-object"
     TORCH_DOC_TABLE_LITERAL = "docutils align-default"
     TORCH_PARAMETER_FROM_BOX_LITERAL = "sig-param"
