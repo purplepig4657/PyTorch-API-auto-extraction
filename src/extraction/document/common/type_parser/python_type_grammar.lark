@@ -1,0 +1,36 @@
+%import common.WS
+%ignore WS
+
+
+type: t
+    | union_type
+
+t: string
+ | optional_type_generic
+ | union_type_generic
+ | list_type_generic
+ | iterable_type_generic
+ | generic_type
+
+
+union_type: t (("or" | ",") t)*
+optional_type_generic: "Optional" "[" t ("," t)* "]"
+union_type_generic: "Union" "[" t ("," t)+ "]"
+list_type_generic: "list" "of" t
+iterable_type_generic: "iterable" "of" t
+generic_type: t "[" t ("," t)* "]"
+string: OPTIONAL -> optional
+      | TYPE_LIST -> type_list
+      | TYPE_NAME -> type_name
+
+TYPE_NAME: /[a-zA-Z_][a-zA-Z0-9_.]*/
+OPTIONAL: "optional"
+TYPE_LIST: "..."
+
+// optional_type_generic
+// list_type_generic: "list" "[" t ("," t)* "]"
+//                  | "list" "of" t
+// tuple_type_generic: "Tuple" "[" t ("," t)* "]"
+// dict_type_generic: "dict" "[" t ("," t)* "]"
+// iterable_type_generic: "Iterable" "[" t ("," t)* "]"
+//                      | "iterable" "of" t

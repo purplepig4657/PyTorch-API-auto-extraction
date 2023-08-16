@@ -26,7 +26,6 @@ class Library:
         return self.__function_list
 
     def __str__(self) -> str:
-
         class_list_str = list(map(str, self.class_list))
         function_list_str = list(map(str, self.function_list))
-        return f"{{ symbol: {self.symbol}, class_list: {class_list_str}, function_list: {function_list_str} }}"
+        return f"{{\"symbol\": {self.symbol}, \"class_list\": {class_list_str}, \"function_list\": {function_list_str}}}"

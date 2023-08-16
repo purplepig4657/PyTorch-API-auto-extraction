@@ -14,12 +14,13 @@ from src.extraction.repository.pytorch_html_code_api import PyTorchHtmlCodeApi
 
 class LibraryDoc(Library):
     __pytorch_html_code_api: PyTorchHtmlCodeApi
-
     __additional_doc_soup: list[BeautifulSoup]
+    __recursive: bool = True
 
     def __init__(self, pytorch_html_code_api: PyTorchHtmlCodeApi, library_name: Symbol, library_soup: BeautifulSoup):
         self.__pytorch_html_code_api = pytorch_html_code_api
-        self.__additional_doc_soup = self.__extract_additional_doc_table(library_soup)
+        if self.__recursive:
+            self.__additional_doc_soup = self.__extract_additional_doc_table(library_soup)
         function_name_list, function_tag_list = self.__extract_function_name_list_and_tag_list(library_soup)
         class_name_list, class_tag_list = self.__extract_class_name_list_and_tag_list(library_soup)
 
@@ -48,6 +49,7 @@ class LibraryDoc(Library):
                 if len(a_tags) == 0:
                     # raise RuntimeError("There is no link", doc_table.text)
                     # There is several cases that table having functions and classes don't have 'a' tag (link).
+                    print("Warning: There is no link")
                     continue
 
                 for a_tag in a_tags:
@@ -86,7 +88,8 @@ class LibraryDoc(Library):
         torch_functions: ResultSet[Tag] = soup.select(
             SelectorStringBuilder(class_literal=PyTorchDocConstant.TORCH_FUNCTION_LITERAL).build()
         )
-        torch_functions.extend(self.__extract_doc_table_function_tag_list(self.__additional_doc_soup))
+        if self.__recursive:
+            torch_functions.extend(self.__extract_doc_table_function_tag_list(self.__additional_doc_soup))
         name_list: list[Symbol] = list[Symbol]()
         tag_list: list[Tag] = list[Tag]()
         if len(torch_functions) == 0:
@@ -117,7 +120,8 @@ class LibraryDoc(Library):
         torch_classes: ResultSet[Tag] = soup.select(
             SelectorStringBuilder(class_literal=PyTorchDocConstant.TORCH_CLASS_LITERAL).build()
         )
-        torch_classes.extend(self.__extract_doc_table_class_tag_list(self.__additional_doc_soup))
+        if self.__recursive:
+            torch_classes.extend(self.__extract_doc_table_class_tag_list(self.__additional_doc_soup))
         name_list: list[Symbol] = list[Symbol]()
         tag_list: list[Tag] = list[Tag]()
         if len(torch_classes) == 0:

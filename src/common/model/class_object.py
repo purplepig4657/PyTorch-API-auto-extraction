@@ -26,5 +26,5 @@ class ClassObject:
         return self.__method_list
 
     def __str__(self) -> str:
-        return f"{{ symbol: {self.symbol}, param_list: {list(map(str, self.param_list))}, " \
-               f"method_list: {list(map(str, self.method_list))} }}"
+        return f"{{ \"symbol\": {self.symbol}, \"param_list\": {list(map(str, self.param_list))}, " \
+               f"\"method_list\": {list(map(str, self.method_list))} }}"
