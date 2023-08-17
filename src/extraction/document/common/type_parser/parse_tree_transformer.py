@@ -10,12 +10,24 @@ from src.extraction.document.common.type_parser.type_parser import TypeParser
 
 class ParseTreeTransformer(Transformer):
     # noinspection PyMethodMayBeStatic
-    def type(self, item: list[Token]) -> Token:
-        return item[0]
+    def type(self, items: list[Token]) -> Token:
+        return items[0]
 
     # noinspection PyMethodMayBeStatic
-    def t(self, item: list[Token]) -> Token:
-        return item[0]
+    def _type(self, items: list[Token]) -> Token:
+        return items[0]
+
+    # noinspection PyMethodMayBeStatic
+    def t(self, items: list[Token]) -> Token:
+        return items[0]
+
+    # noinspection PyMethodMayBeStatic
+    def weird_optional_type(self, items: list[Type]) -> Type:
+        return GenericType(Symbol("Optional"), items)
+
+    # noinspection PyMethodMayBeStatic
+    def weird_required_type(self, items: list[Type]) -> Type:
+        return items[0]
 
     # noinspection PyMethodMayBeStatic
     def union_type(self, items: list[Type]) -> Type:
@@ -46,18 +58,18 @@ class ParseTreeTransformer(Transformer):
         return GenericType(items[0].symbol, items[1:])
 
     # noinspection PyMethodMayBeStatic
-    def type_name(self, item: list[Token]) -> Type:
-        return Type(Symbol(item[0]))
+    def type_name(self, items: list[Token]) -> Type:
+        return Type(Symbol(items[0]))
 
     # noinspection PyMethodMayBeStatic
-    def type_list(self, item: list[Token]) -> Type:
-        return Type(Symbol(item[0]))
+    def type_list(self, items: list[Token]) -> Type:
+        return Type(Symbol(items[0]))
 
     # noinspection PyMethodMayBeStatic
-    def optional(self, item: list[Token]) -> Type:
-        return Type(Symbol(item[0]))
+    def optional(self, items: list[Token]) -> Type:
+        return Type(Symbol(items[0]))
 
 
-# tree = TypeParser().parse("dict[int, str] or Optional[int] or iterable of int, list of str")
+# tree = TypeParser().parse("str, int, str, optional")
 # print(ParseTreeTransformer().transform(tree))
 # print(tree.pretty())

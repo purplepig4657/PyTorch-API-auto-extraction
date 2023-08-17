@@ -2,17 +2,27 @@
 %ignore WS
 
 
-type: t
+type: weird_optional_type
+    | weird_required_type
+    | _type
+
+
+_type: t
     | union_type
+
 
 t: string
  | optional_type_generic
- | union_type_generic
  | callable_type_generic
+ | union_type_generic
  | list_type_generic
  | iterable_type_generic
  | generic_type
 
+
+weird_optional_type: _type "," "optional"
+
+weird_required_type: _type "," "required"
 
 union_type: t (("or" | ",") t)*
 
@@ -32,7 +42,7 @@ string: OPTIONAL -> optional
       | TYPE_LIST -> type_list
       | TYPE_NAME -> type_name
 
-TYPE_NAME: /[a-zA-Z_][a-zA-Z0-9_.]*/
+TYPE_NAME: /[a-zA-Z_][a-zA-Z0-9_.]*(?<!optional)(?<!required)/
 OPTIONAL: "optional"
 TYPE_LIST: "..."
 
