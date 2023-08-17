@@ -8,17 +8,26 @@ type: t
 t: string
  | optional_type_generic
  | union_type_generic
+ | callable_type_generic
  | list_type_generic
  | iterable_type_generic
  | generic_type
 
 
 union_type: t (("or" | ",") t)*
+
 optional_type_generic: "Optional" "[" t ("," t)* "]"
+
 union_type_generic: "Union" "[" t ("," t)+ "]"
+
+callable_type_generic: "Callable" "[" "[" t ("," t)* "]" "," t "]"
+
 list_type_generic: "list" "of" t
+
 iterable_type_generic: "iterable" "of" t
+
 generic_type: t "[" t ("," t)* "]"
+
 string: OPTIONAL -> optional
       | TYPE_LIST -> type_list
       | TYPE_NAME -> type_name

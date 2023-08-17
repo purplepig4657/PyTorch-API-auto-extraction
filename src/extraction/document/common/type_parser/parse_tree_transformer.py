@@ -1,5 +1,6 @@
 from lark import Transformer, Token
 
+from src.common.model.callable_type import CallableType
 from src.common.model.generic_type import GenericType
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
@@ -23,6 +24,10 @@ class ParseTreeTransformer(Transformer):
     # noinspection PyMethodMayBeStatic
     def union_type_generic(self, items: list[Type]) -> Type:
         return GenericType(Symbol("Union"), items)
+
+    # noinspection PyMethodMayBeStatic
+    def callable_type_generic(self, items: list[Type]) -> Type:
+        return CallableType(Symbol("Callable"), parameter_type_list=items[:-1], return_type=items[-1])
 
     # noinspection PyMethodMayBeStatic
     def optional_type_generic(self, items: list[Type]) -> Type:
