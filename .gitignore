@@ -324,3 +324,4 @@ pyrightconfig.json
 
 src/test.py
 test*.json
+src/repository/api/cache

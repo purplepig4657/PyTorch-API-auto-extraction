@@ -15,7 +15,7 @@ from src.extraction.repository.pytorch_html_code_api import PyTorchHtmlCodeApi
 class LibraryDoc(Library):
     __pytorch_html_code_api: PyTorchHtmlCodeApi
     __additional_doc_soup: list[BeautifulSoup]
-    __recursive: bool = False
+    __recursive: bool = True
 
     def __init__(self, pytorch_html_code_api: PyTorchHtmlCodeApi, library_name: Symbol, library_soup: BeautifulSoup):
         self.__pytorch_html_code_api = pytorch_html_code_api
