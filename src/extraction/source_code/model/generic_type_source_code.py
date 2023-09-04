@@ -1,0 +1,2 @@
+class GenericTypeSourceCode:
+    pass

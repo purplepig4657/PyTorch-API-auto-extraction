@@ -25,6 +25,7 @@ class FileTree:
                 if file.name == target_file_name:
                     return file
 
+            print("There is no leaf match with file name.")
             return None  # There is no leaf match with file name.
 
         if len(file_name_analyze_tmp) > 0:
@@ -33,6 +34,7 @@ class FileTree:
                 if directory.name == next_directory_name:
                     return directory.file_search('.'.join(file_name_analyze_tmp[1:]))
 
+            print("There is no tree match with directory name.")
             return None  # There is no tree match with directory name.
 
         return None
