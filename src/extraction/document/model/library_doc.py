@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup, Tag, ResultSet
 
 from src.common.model.class_object import ClassObject
 from src.common.model.function import Function
-from src.common.model.library import Library
+from src.common.model.document.library import Library
 from src.common.model.symbol import Symbol
 from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
 from src.extraction.document.common.selector_string_builder import SelectorStringBuilder

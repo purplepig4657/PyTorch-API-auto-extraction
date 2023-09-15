@@ -1,4 +1,4 @@
-from src.common.model.library import Library
+from src.common.model.document.library import Library
 
 
 class Result:

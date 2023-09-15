@@ -1,8 +1,8 @@
 from typing import Tuple
 from bs4 import BeautifulSoup, Tag, ResultSet
 
-from src.common.model.library import Library
-from src.common.model.result import Result
+from src.common.model.document.library import Library
+from src.common.model.document.result import Result
 from src.common.model.symbol import Symbol
 from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
 from src.extraction.document.model.library_doc import LibraryDoc

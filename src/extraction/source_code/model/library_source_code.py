@@ -1,2 +1,0 @@
-class LibrarySourceCode:
-    pass
