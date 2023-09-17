@@ -8,9 +8,9 @@ from src.common.model.symbol import Symbol
 
 class FunctionSourceCode(Function):
 
-    __function_node: ast.AST
+    __function_node: ast.FunctionDef
 
-    def __init__(self, function_node: ast.AST):
+    def __init__(self, function_node: ast.FunctionDef):
         symbol: Symbol = self.__extract_function_name()
         param_list: list[Parameter] = self.__extract_param_list()
         return_type: Optional[Type] = self.__extract_return_type()

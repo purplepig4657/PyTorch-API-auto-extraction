@@ -8,9 +8,9 @@ from src.common.model.symbol import Symbol
 
 class ClassObjectSourceCode(ClassObject):
 
-    __class_node: ast.AST
+    __class_node: ast.ClassDef
 
-    def __init__(self, class_node: ast.AST):
+    def __init__(self, class_node: ast.ClassDef):
         symbol: Symbol = self.__extract_class_name()
         param_list: list[Parameter] = self.__extract_param_list()
         method_list: list[Method] = self.__extract_method_list()

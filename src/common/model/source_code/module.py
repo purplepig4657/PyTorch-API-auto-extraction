@@ -1,5 +1,3 @@
-import ast
-
 from src.common.model.class_object import ClassObject
 from src.common.model.function import Function
 from src.common.model.symbol import Symbol
@@ -38,7 +36,3 @@ class Module:
     @property
     def source_code(self) -> str:
         return self.__source_code
-
-    @property
-    def ast(self) -> ast.AST:
-        return ast.parse(self.source_code)
