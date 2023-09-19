@@ -5,7 +5,7 @@ from src.common.model.symbol import Symbol
 
 class Module:
     __symbol: Symbol
-    __class_list: list[ClassObject]
+    __class_object_list: list[ClassObject]
     __function_list: list[Function]
     __source_code: str
 
@@ -17,7 +17,7 @@ class Module:
             source_code: str
     ):
         self.__symbol = symbol
-        self.__class_list = class_list
+        self.__class_object_list = class_list
         self.__function_list = function_list
         self.__source_code = source_code
 
@@ -27,7 +27,7 @@ class Module:
 
     @property
     def class_list(self) -> list[ClassObject]:
-        return self.__class_list
+        return self.__class_object_list
 
     @property
     def function_list(self) -> list[Function]:

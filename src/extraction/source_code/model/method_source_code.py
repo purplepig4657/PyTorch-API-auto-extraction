@@ -6,5 +6,5 @@ from src.extraction.source_code.model.function_source_code import FunctionSource
 
 class MethodSourceCode(FunctionSourceCode, Method):
 
-    def __init__(self, function_node: ast.AST):
+    def __init__(self, function_node: ast.FunctionDef):
         super().__init__(function_node)
