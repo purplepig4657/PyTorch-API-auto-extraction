@@ -13,16 +13,14 @@ from src.extraction.source_code.model.function_source_code import FunctionSource
 class ModuleSourceCode(Module):
 
     __ast: ast.Module
-    __class_object_list: list[ClassObject]
-    __function_list: list[Function]
 
     def __init__(self, module_file_leaf: FileLeaf):
         symbol: Symbol = Symbol(module_file_leaf.name)
         source_code: str = module_file_leaf.content
         self.__ast = ast.parse(source_code)
-        self.__class_object_list = self.__extract_all_class_list()
-        self.__function_list = self.__extract_all_function_list()
-        super().__init__(symbol, self.__class_object_list, self.__function_list, source_code)
+        class_object_list: list[ClassObject] = self.__extract_all_class_list()
+        function_list: list[Function] = self.__extract_all_function_list()
+        super().__init__(symbol, class_object_list, function_list, source_code)
 
     def __extract_all_class_list(self) -> list[ClassObject]:
         class_list: list[ClassObject] = list[ClassObject]()
@@ -60,14 +58,18 @@ class ModuleSourceCode(Module):
 
         target_name: str = fully_qualified_name_list[0]
 
-        for class_object in self.__class_object_list:
+        for class_object in self.class_list:
             if not isinstance(class_object, ClassObjectSourceCode):
                 return None
             if class_object.symbol.name == target_name:
                 return class_object.search(fully_qualified_name_list[1:])
 
-        for function in self.__function_list:
+        for function in self.function_list:
             if not isinstance(function, FunctionSourceCode):
                 return None
             if function.symbol.name == target_name:
                 return function
+
+    @property
+    def ast(self) -> ast.Module:
+        return self.__ast

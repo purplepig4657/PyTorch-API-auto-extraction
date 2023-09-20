@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 from typing import Optional, Union
 
@@ -13,14 +15,22 @@ from src.extraction.source_code.model.method_source_code import MethodSourceCode
 class ClassObjectSourceCode(ClassObject):
 
     __class_node: ast.ClassDef
-    __method_list: list[Method]
 
-    def __init__(self, class_node: ast.ClassDef):
+    def __init__(
+            self,
+            class_node: ast.ClassDef,
+            symbol: Symbol = None,
+            param_list: list[Parameter] = None,
+            method_list: list[Method] = None
+    ):
         self.__class_node = class_node
-        symbol: Symbol = self.__extract_class_name()
-        param_list: list[Parameter] = self.__extract_param_list()
-        self.__method_list = self.__extract_method_list()
-        super().__init__(symbol, param_list, self.__method_list)
+        if symbol is None:
+            symbol = self.__extract_class_name()
+        if param_list is None:
+            param_list = self.__extract_param_list()
+        if method_list is None:
+            method_list = self.__extract_method_list()
+        super().__init__(symbol, param_list, method_list)
 
     def __extract_class_name(self) -> Symbol:
         return Symbol(self.__class_node.name)
@@ -49,8 +59,16 @@ class ClassObjectSourceCode(ClassObject):
 
         target_name: str = fully_qualified_name_list[0]
 
-        for method in self.__method_list:
+        for method in self.method_list:
             if not isinstance(method, FunctionSourceCode):
                 return None
             if method.symbol.name == target_name:
                 return method
+
+    def as_name(self, as_name: str) -> ClassObjectSourceCode:
+        return ClassObjectSourceCode(
+            self.__class_node,
+            Symbol(as_name),
+            self.param_list,
+            self.method_list
+        )

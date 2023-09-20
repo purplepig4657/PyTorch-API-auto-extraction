@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ast
 from typing import Optional, Type
 
@@ -10,11 +12,20 @@ class FunctionSourceCode(Function):
 
     __function_node: ast.FunctionDef
 
-    def __init__(self, function_node: ast.FunctionDef):
+    def __init__(
+            self,
+            function_node: ast.FunctionDef,
+            symbol: Symbol = None,
+            param_list: list[Parameter] = None,
+            return_type: Optional[Type] = None
+    ):
         self.__function_node = function_node
-        symbol: Symbol = self.__extract_function_name()
-        param_list: list[Parameter] = self.__extract_param_list()
-        return_type: Optional[Type] = self.__extract_return_type()
+        if symbol is None:
+            symbol: Symbol = self.__extract_function_name()
+        if param_list is None:
+            param_list: list[Parameter] = self.__extract_param_list()
+        if return_type is None:
+            return_type: Optional[Type] = self.__extract_return_type()
         super().__init__(symbol, param_list, return_type)
 
     def __extract_function_name(self) -> Symbol:
@@ -25,3 +36,11 @@ class FunctionSourceCode(Function):
 
     def __extract_return_type(self) -> Optional[Type]:
         pass
+
+    def as_name(self, as_name: str) -> FunctionSourceCode:
+        return FunctionSourceCode(
+            self.__function_node,
+            Symbol(as_name),
+            self.param_list,
+            self.return_type
+        )

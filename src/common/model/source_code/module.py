@@ -21,6 +21,12 @@ class Module:
         self.__function_list = function_list
         self.__source_code = source_code
 
+    def add_class_object(self, new_class_object: ClassObject) -> None:
+        self.class_list.append(new_class_object)
+
+    def add_function(self, new_function: Function) -> None:
+        self.function_list.append(new_function)
+
     @property
     def symbol(self) -> Symbol:
         return self.__symbol

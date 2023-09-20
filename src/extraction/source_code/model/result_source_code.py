@@ -2,7 +2,6 @@ from typing import Union, Optional
 
 from src.common.model.class_object import ClassObject
 from src.common.model.function import Function
-from src.common.model.method import Method
 from src.common.model.source_code.module import Module
 from src.common.model.source_code.package import Package
 from src.common.model.source_code.result import Result
@@ -18,7 +17,7 @@ class ResultSourceCode(Result):
     def __init__(self, root_tree: FileTree):
         self.__root_tree = root_tree
         self.__root_package = self.__extract_root_package()
-        # self.__resolve_init_py()
+        self.__resolve_init_py()
         super().__init__(root_package=self.__root_package)
 
     def __extract_root_package(self) -> Package:
@@ -35,7 +34,5 @@ class ResultSourceCode(Result):
 
     def __resolve_init_py(self) -> None:
         package_list: list[Package] = self.__root_package.package_list
-        for package in package_list:
-            package: PackageSourceCode = package
-            package.resolve_init_py()
-
+        if isinstance(self.__root_package, PackageSourceCode):
+            self.__root_package.resolve_init_py(['torch'], self.__root_package)
