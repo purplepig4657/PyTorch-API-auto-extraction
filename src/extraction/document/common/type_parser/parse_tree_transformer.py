@@ -4,8 +4,6 @@ from src.common.model.callable_type import CallableType
 from src.common.model.generic_type import GenericType
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
-from src.common.model.union_type import UnionType
-from src.extraction.document.common.type_parser.type_parser import TypeParser
 
 
 class ParseTreeTransformer(Transformer):
@@ -52,6 +50,10 @@ class ParseTreeTransformer(Transformer):
     # noinspection PyMethodMayBeStatic
     def list_type_generic(self, items: list[Type]) -> Type:
         return GenericType(Symbol("list"), items)
+
+    # noinspection PyMethodMayBeStatic
+    def tuple_type_generic(self, items: list[Type]) -> Type:
+        return GenericType(Symbol("tuple"), items)
 
     # noinspection PyMethodMayBeStatic
     def generic_type(self, items: list[Type]) -> Type:

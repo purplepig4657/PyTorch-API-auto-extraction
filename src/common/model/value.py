@@ -13,7 +13,7 @@ class Value(Generic[T]):
 
     @classmethod
     def none_value(cls) -> Value:
-        return cls("None")
+        return cls("나는없다규")
 
     @property
     def value(self) -> T:

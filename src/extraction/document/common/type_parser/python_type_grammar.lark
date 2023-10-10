@@ -16,6 +16,7 @@ t: string
  | callable_type_generic
  | union_type_generic
  | list_type_generic
+ | tuple_type_generic
  | iterable_type_generic
  | generic_type
 
@@ -24,7 +25,7 @@ weird_optional_type: _type "," "optional"
 
 weird_required_type: _type "," "required"
 
-union_type: t (("or" | ",") t)*
+union_type: t (("or" | "," | ", or") t)*
 
 optional_type_generic: "Optional" "[" t ("," t)* "]"
 
@@ -32,9 +33,11 @@ union_type_generic: "Union" "[" t ("," t)+ "]"
 
 callable_type_generic: "Callable" "[" "[" t ("," t)* "]" "," t "]"
 
-list_type_generic: "list" "of" t
+list_type_generic: ("list" | "List") "of" t
 
-iterable_type_generic: "iterable" "of" t
+tuple_type_generic: ("tuple" | "Tuple") "of" t
+
+iterable_type_generic: ("iterable" | "Iterable") "of" t
 
 generic_type: t "[" t ("," t)* "]"
 

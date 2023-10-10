@@ -77,9 +77,9 @@ class ParameterDoc(Parameter):
             parameter_default = Value[str](default_value)
 
         if parameter_default is None:
-            parameter_default = Value("None")
+            parameter_default = Value.none_value()
         if parameter_type is None:
-            parameter_type = Type(Symbol("None"))
+            parameter_type = Type.none_type()
 
         return parameter_symbol, parameter_type, parameter_default
 
@@ -100,8 +100,8 @@ class ParameterDoc(Parameter):
         if len(parameter_info) == 0:
             # There is no information of parameter.
             parameter_name = Symbol("*")
-            parameter_type = Type(Symbol("None"))
-            parameter_default_value = Value("None")
+            parameter_type = Type.none_type()
+            parameter_default_value = Value.none_value()
             return parameter_name, parameter_type, parameter_default_value
         if len(parameter_info) == 1:
             # There is only name, no type.
@@ -143,8 +143,8 @@ class ParameterDoc(Parameter):
             print("Warning: invalid doc, default value was not divided tag.")
 
         if parameter_default_value is None:
-            parameter_default_value = Value("None")
+            parameter_default_value = Value.none_value()
         if parameter_type is None:
-            parameter_type = Type(Symbol("None"))
+            parameter_type = Type.none_type()
 
         return parameter_name, parameter_type, parameter_default_value

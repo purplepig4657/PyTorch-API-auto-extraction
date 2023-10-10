@@ -1,4 +1,5 @@
 from bs4 import Tag
+from lark import LarkError
 
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
@@ -18,9 +19,9 @@ class TypeDoc(Type):
     def from_box_a_tag(cls, type_tag: Tag):
         try:
             parse_tree = cls.type_parser.parse(type_tag.text)
-        except Exception:
+        except LarkError:
             print("Warning: type that in content parsing error.")
-            return Type(Symbol("None"))
+            return Type.parse_error_type()
         result: Type = cls.parse_tree_transformer.transform(parse_tree)
         return result
 
@@ -32,8 +33,8 @@ class TypeDoc(Type):
     def from_content_type_str(cls, type_str: str) -> Type:
         try:
             parse_tree = cls.type_parser.parse(type_str)
-        except Exception:
+        except LarkError:
             print("Warning: type that in content parsing error.")
-            return Type(Symbol("None"))
+            return Type.parse_error_type()
         result: Type = cls.parse_tree_transformer.transform(parse_tree)
         return result
