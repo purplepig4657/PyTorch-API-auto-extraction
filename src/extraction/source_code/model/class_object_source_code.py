@@ -49,8 +49,21 @@ class ClassObjectSourceCode(ClassObject):
         stmts: list[ast.stmt] = self.__class_node.body
         function_def_list: list[ast.FunctionDef] = list[ast.FunctionDef]()
         for stmt in stmts:
-            if isinstance(stmt, ast.FunctionDef):
-                function_def_list.append(stmt)
+            self.__recursive_find_method_def(stmt, function_def_list)
+        return function_def_list
+
+    def __recursive_find_method_def(
+            self,
+            node: ast.AST,
+            function_def_list: list[ast.FunctionDef]
+    ) -> list[ast.FunctionDef]:
+        if isinstance(node, ast.ClassDef):
+            return []
+        if isinstance(node, ast.FunctionDef):
+            function_def_list.append(node)
+            return []
+        for child in ast.iter_child_nodes(node):
+            self.__recursive_find_method_def(child, function_def_list)
         return function_def_list
 
     def search(self, fully_qualified_name_list: list[str]) -> Optional[Union[ClassObject, Function]]:

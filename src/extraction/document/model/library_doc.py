@@ -102,6 +102,8 @@ class LibraryDoc(Library):
             if torch_function_object is None:
                 raise RuntimeError("Wrong document")
             torch_function_name: str = torch_function_object.get('id')
+            if torch_function_name is None:
+                continue
             name_list.append(Symbol(torch_function_name))
             tag_list.append(torch_function_object)
         return name_list, torch_functions
@@ -134,6 +136,8 @@ class LibraryDoc(Library):
             if torch_class_object is None:
                 raise RuntimeError("Wrong document")
             torch_class_name: str = torch_class_object.get('id')
+            if torch_class_name is None:
+                continue
             name_list.append(Symbol(torch_class_name))
             tag_list.append(torch_class_object)
         return name_list, torch_classes

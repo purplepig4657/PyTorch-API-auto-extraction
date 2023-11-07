@@ -17,7 +17,7 @@ class PyTorchSourceCodeRepositoryImpl(PyTorchSourceCodeRepository):
         if len(ext) == 0:
             return False
         ext: str = ext[-1]
-        return ext == 'py'
+        return ext == 'py' or ext == 'pyi'
 
     def get_source_code_tree(
             self,

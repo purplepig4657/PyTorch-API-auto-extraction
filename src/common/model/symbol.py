@@ -5,6 +5,8 @@ class Symbol:
     __name: str
 
     def __init__(self, name: str):
+        if name is None:
+            raise Exception("name cannot be None.")
         self.__name = name
 
     @property

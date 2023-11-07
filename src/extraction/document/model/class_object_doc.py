@@ -177,6 +177,7 @@ class ClassObjectDoc(ClassObject):
             attrs={'class': PyTorchDocConstant.TORCH_METHOD_LITERAL},
             recursive=False
         )
+        result_method_tag_list: list[Tag] = list[Tag]()
         name_list: list[Symbol] = list[Symbol]()
         if len(method_tag_list) == 0:
             return name_list, method_tag_list
@@ -188,7 +189,10 @@ class ClassObjectDoc(ClassObject):
             if torch_method_object is None:
                 raise RuntimeError("Wrong document")
             torch_method_name: str = torch_method_object.get('id')
+            if torch_method_name is None:
+                continue
             name_list.append(Symbol(torch_method_name))
+            result_method_tag_list.append(torch_method)
         return name_list, method_tag_list
 
     # noinspection PyMethodMayBeStatic

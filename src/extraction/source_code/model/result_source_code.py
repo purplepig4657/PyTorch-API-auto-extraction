@@ -5,6 +5,7 @@ from src.common.model.function import Function
 from src.common.model.source_code.module import Module
 from src.common.model.source_code.package import Package
 from src.common.model.source_code.result import Result
+from src.common.model.symbol import Symbol
 from src.extraction.source_code.model.file_model.file_tree import FileTree
 from src.extraction.source_code.model.package_source_code import PackageSourceCode
 
@@ -24,7 +25,9 @@ class ResultSourceCode(Result):
         root_package = PackageSourceCode(self.__root_tree)
         return root_package
 
-    def search(self, fully_qualified_name: str) -> Optional[Union[Module, ClassObject, Function]]:
+    def search(self, fully_qualified_name: Union[str, Symbol]) -> Optional[Union[Module, ClassObject, Function]]:
+        if type(fully_qualified_name) == Symbol:
+            fully_qualified_name = fully_qualified_name.name
         name_split: list[str] = fully_qualified_name.split('.')
         if name_split[0] != "torch":
             return None

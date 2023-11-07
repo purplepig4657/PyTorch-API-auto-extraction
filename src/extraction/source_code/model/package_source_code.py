@@ -50,25 +50,25 @@ class PackageSourceCode(Package):
 
         target_name: str = fully_qualified_name_list[0]
 
-        if not isinstance(self.__init_py, ModuleSourceCode):
+        for package in self.package_list:
+            if not isinstance(package, PackageSourceCode):  # just Type Checking
+                return None
+            if package.symbol.name == target_name:
+                return package.search(fully_qualified_name_list[1:])
+
+        for module in self.module_list:
+            if not isinstance(module, ModuleSourceCode):  # just Type Checking
+                return None
+            if module.symbol.name == target_name:
+                return module.search(fully_qualified_name_list[1:])
+
+        if not isinstance(self.__init_py, ModuleSourceCode):  # just Type Checking
             return None
         else:
             result = self.__init_py.search(fully_qualified_name_list)
 
         if result is not None:
             return result
-
-        for package in self.package_list:
-            if not isinstance(package, PackageSourceCode):
-                return None
-            if package.symbol.name == target_name:
-                return package.search(fully_qualified_name_list[1:])
-
-        for module in self.module_list:
-            if not isinstance(module, ModuleSourceCode):
-                return None
-            if module.symbol.name == target_name:
-                return module.search(fully_qualified_name_list[1:])
 
         return None
 
@@ -93,24 +93,28 @@ class PackageSourceCode(Package):
                 module_list: list[str] = module.split('.')
             import_names: list[ast.alias] = import_from.names
 
+            if import_names[0].name == '*':
+                path: list[str] = fully_qualified_name_list.copy()[1:]
+                name: str = module_list[-1]
+                resolved_path: list[str] = self.__path_resolve(level, name, module_list[:-1], path)
+                result: Optional[Module] = root_package.search(resolved_path)
+                if result is None:
+                    continue
+                function_list_len: int = len(result.function_list)
+                for i in range(function_list_len):
+                    self.__init_py.add_function(result.function_list[i])
+                class_list_len: int = len(result.class_list)
+                for i in range(class_list_len):
+                    self.__init_py.add_class_object(result.class_list[i])
+                continue
+
             for name_alias in import_names:
                 path: list[str] = fully_qualified_name_list.copy()[1:]
                 name: str = name_alias.name
                 as_name: str = name_alias.asname if name_alias.asname is not None else name
-                result: Optional[Union[ClassObject, Function]]
-                if level == -1:  # absolute path
-                    module_list_tmp = module_list[1:]
-                    module_list_tmp.append(name)
-                    result = root_package.search(module_list_tmp)
-                elif level == 0:  # relative path
-                    path.extend(module_list)
-                    path.append(name)
-                    result = root_package.search(path)
-                else:  # relative path
-                    path = path[:-level]
-                    path.extend(module_list)
-                    path.append(name)
-                    result = root_package.search(path)
+                resolved_path: list[str] = self.__path_resolve(level, name, module_list, path)
+                result: Optional[Union[ClassObject, Function]] = root_package.search(resolved_path)
+                # print(resolved_path)
 
                 if result is None:
                     continue
@@ -125,6 +129,21 @@ class PackageSourceCode(Package):
                 package.resolve_init_py(fully_qualified_name_list, root_package)
                 fully_qualified_name_list.pop()
 
+    def __path_resolve(self, level: int, name: str, module_list: list[str], path: list[str]) -> list[str]:
+        if level == -1:  # absolute path
+            module_list_tmp = module_list[1:]
+            module_list_tmp.append(name)
+            return module_list_tmp
+        elif level == 0:  # relative path
+            path.extend(module_list)
+            path.append(name)
+            return path
+        else:  # relative path
+            path = path[:-level]
+            path.extend(module_list)
+            path.append(name)
+            return path
+
     def __extract_import_from(self) -> list[ast.ImportFrom]:
         if self.__init_py is None:
             return list()
@@ -133,8 +152,18 @@ class PackageSourceCode(Package):
         stmts: list[ast.stmt] = self.__init_py.ast.body
         import_from_list: list[ast.ImportFrom] = list[ast.ImportFrom]()
         for stmt in stmts:
-            if isinstance(stmt, ast.ImportFrom):
-                import_from_list.append(stmt)
+            self.__recursive_find_import_from(stmt, import_from_list)
+        return import_from_list
+
+    def __recursive_find_import_from(
+            self,
+            node: ast.AST,
+            import_from_list: list[ast.ImportFrom]
+    ) -> list[ast.ImportFrom]:
+        if isinstance(node, ast.ImportFrom):
+            import_from_list.append(node)
+        for child in ast.iter_child_nodes(node):
+            self.__recursive_find_import_from(child, import_from_list)
         return import_from_list
 
     @property
