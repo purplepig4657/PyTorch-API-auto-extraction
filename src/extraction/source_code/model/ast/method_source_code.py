@@ -1,7 +1,7 @@
 import ast
 
 from src.common.model.method import Method
-from src.extraction.source_code.model.function_source_code import FunctionSourceCode
+from src.extraction.source_code.model.ast.function_source_code import FunctionSourceCode
 
 
 class MethodSourceCode(FunctionSourceCode, Method):

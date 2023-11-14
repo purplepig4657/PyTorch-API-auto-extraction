@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import reduce
 
 from src.common.model.symbol import Symbol
@@ -13,10 +15,9 @@ class CallableType(Type):
         self.__parameter_type_list = parameter_type_list
         self.__return_type = return_type
 
-    def __eq__(self, other: Type) -> bool:
-        if type(other) != "GenericType":
+    def __eq__(self, other: CallableType) -> bool:
+        if not isinstance(other, CallableType):
             return False
-        other: CallableType = other
         return reduce(
             lambda acc, cur: acc and cur,
             [self_item in other.parameter_type_list for self_item in self.parameter_type_list],

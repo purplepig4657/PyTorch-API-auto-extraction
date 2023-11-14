@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 from src.common.model.parameter import Parameter
@@ -30,3 +32,15 @@ class Function:
     def __str__(self) -> str:
         return f"{{ \"symbol\": {self.symbol}, \"param_list\": {list(map(str, self.param_list))}, " \
                f"\"return_type\": {self.return_type} }}"
+
+    def __eq__(self, other: Function):
+        if len(self.param_list) != len(other.param_list):
+            return False
+        for self_parameter, other_parameter in zip(self.param_list, other.param_list):
+            if self_parameter != other_parameter:
+                return False
+        if self.symbol != other.symbol:
+            return False
+        if self.return_type != other.return_type:
+            return False
+        return True

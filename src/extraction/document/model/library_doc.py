@@ -24,6 +24,7 @@ class LibraryDoc(Library):
         function_name_list, function_tag_list = self.__extract_function_name_list_and_tag_list(library_soup)
         class_name_list, class_tag_list = self.__extract_class_name_list_and_tag_list(library_soup)
 
+        print(len(function_name_list), len(function_tag_list))
         function_list: list[Function] = self.__extract_functions(function_name_list, function_tag_list)
         class_list: list[ClassObject] = self.__extract_classes(class_name_list, class_tag_list)
 
@@ -105,8 +106,9 @@ class LibraryDoc(Library):
             if torch_function_name is None:
                 continue
             name_list.append(Symbol(torch_function_name))
-            tag_list.append(torch_function_object)
-        return name_list, torch_functions
+            # tag_list.append(torch_function_object) ... torch_function 를 넘기고 있었음... 나중에 고쳐야 할듯.
+            tag_list.append(torch_function)
+        return name_list, tag_list
 
     # noinspection PyMethodMayBeStatic
     def __extract_functions(self, function_name_list: list[Symbol], function_tag_list: list[Tag]) -> list[Function]:

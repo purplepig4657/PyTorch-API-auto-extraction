@@ -14,9 +14,8 @@ class UnionType(Type):
         return self.__union_list
 
     def __eq__(self, other: Type) -> bool:
-        if type(other) == "UnionType":
+        if not isinstance(other, UnionType):
             return False
-        other: UnionType = other
         for t in self.union_list:
             if t not in other.union_list:
                 return False

@@ -7,7 +7,7 @@ from src.common.model.source_code.package import Package
 from src.common.model.source_code.result import Result
 from src.common.model.symbol import Symbol
 from src.extraction.source_code.model.file_model.file_tree import FileTree
-from src.extraction.source_code.model.package_source_code import PackageSourceCode
+from src.extraction.source_code.model.ast.package_source_code import PackageSourceCode
 
 
 class ResultSourceCode(Result):
@@ -25,7 +25,9 @@ class ResultSourceCode(Result):
         root_package = PackageSourceCode(self.__root_tree)
         return root_package
 
-    def search(self, fully_qualified_name: Union[str, Symbol]) -> Optional[Union[Module, ClassObject, Function]]:
+    def search(self, fully_qualified_name: Union[str, Symbol]) -> Optional[Union[Module, ClassObject, list[Function]]]:
+        #  => Union[Module, ClassObject, list[Function]] -> 이렇게 바꾸는 거 고려해봐.  => overloading 있을 시 여러 개가
+        #                                                   있을 수 있어서 여러 개 매칭해서 하나라도 맞으면 패스하도록 만들 수 있음.
         if type(fully_qualified_name) == Symbol:
             fully_qualified_name = fully_qualified_name.name
         name_split: list[str] = fully_qualified_name.split('.')

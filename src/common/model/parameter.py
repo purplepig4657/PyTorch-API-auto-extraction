@@ -12,7 +12,8 @@ class Parameter:
     __value_type: Optional[Type]
 
     def __init__(
-            self, symbol: Symbol,
+            self,
+            symbol: Symbol,
             default: Optional[Value],
             value_type: Optional[Type],
     ) -> None:
@@ -58,3 +59,10 @@ class Parameter:
 
     def __str__(self) -> str:
         return f"{{ \"symbol\": {self.symbol}, \"default\": {self.default}, \"value_type\": {self.value_type} }}"
+
+    def __eq__(self, other: Parameter):
+        return (
+            self.symbol == other.symbol and
+            self.default == other.default and
+            self.value_type == other.value_type
+        )

@@ -122,7 +122,7 @@ class ParameterDoc(Parameter):
                 parameter_type = TypeDoc.from_box_a_tag(type_tag)
             else:
                 type_name: str = parameter_info[1].find(name="span").text
-                parameter_type = TypeDoc.from_str(type_name)
+                parameter_type = TypeDoc.from_content_type_str(type_name)
 
         parameter_default_value_tag = parameter_tag.find(
             attrs={'class', PyTorchDocConstant.TORCH_PARAMETER_DEFAULT_VALUE_FROM_BOX_LITERAL},

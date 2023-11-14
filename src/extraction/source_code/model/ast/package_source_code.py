@@ -8,11 +8,11 @@ from src.common.model.function import Function
 from src.common.model.source_code.module import Module
 from src.common.model.source_code.package import Package
 from src.common.model.symbol import Symbol
-from src.extraction.source_code.model.class_object_source_code import ClassObjectSourceCode
+from src.extraction.source_code.model.ast.class_object_source_code import ClassObjectSourceCode
 from src.extraction.source_code.model.file_model.file_leaf import FileLeaf
 from src.extraction.source_code.model.file_model.file_tree import FileTree
-from src.extraction.source_code.model.function_source_code import FunctionSourceCode
-from src.extraction.source_code.model.module_source_code import ModuleSourceCode
+from src.extraction.source_code.model.ast.function_source_code import FunctionSourceCode
+from src.extraction.source_code.model.ast.module_source_code import ModuleSourceCode
 
 
 class PackageSourceCode(Package):
@@ -44,7 +44,7 @@ class PackageSourceCode(Package):
                 self.__init_py = module_source_code
         return module_list
 
-    def search(self, fully_qualified_name_list: list[str]) -> Optional[Union[Module, ClassObject, Function]]:
+    def search(self, fully_qualified_name_list: list[str]) -> Optional[Union[Module, ClassObject, list[Function]]]:
         if len(fully_qualified_name_list) == 0:  # it points this package
             return self.__init_py
 
@@ -97,7 +97,7 @@ class PackageSourceCode(Package):
                 path: list[str] = fully_qualified_name_list.copy()[1:]
                 name: str = module_list[-1]
                 resolved_path: list[str] = self.__path_resolve(level, name, module_list[:-1], path)
-                result: Optional[Module] = root_package.search(resolved_path)
+                result: Optional[Module] = root_package.search(resolved_path)  # only module can be out.
                 if result is None:
                     continue
                 function_list_len: int = len(result.function_list)
@@ -113,15 +113,20 @@ class PackageSourceCode(Package):
                 name: str = name_alias.name
                 as_name: str = name_alias.asname if name_alias.asname is not None else name
                 resolved_path: list[str] = self.__path_resolve(level, name, module_list, path)
-                result: Optional[Union[ClassObject, Function]] = root_package.search(resolved_path)
-                # print(resolved_path)
+                result: Optional[Union[ClassObject, list[Function]]] = root_package.search(resolved_path)
 
                 if result is None:
                     continue
                 if isinstance(result, ClassObjectSourceCode):
                     self.__init_py.add_class_object(result.as_name(as_name))
-                if isinstance(result, FunctionSourceCode):
-                    self.__init_py.add_function(result.as_name(as_name))
+                if not isinstance(result, list):
+                    continue
+                for function in result:
+                    if isinstance(function, FunctionSourceCode):
+                        self.__init_py.add_function(function.as_name(as_name))
+
+                # if isinstance(result, FunctionSourceCode):  # overloading 이 제대로 들어오지 않는 것을 확인 -> 은 아닐 수도
+                #     self.__init_py.add_function(result.as_name(as_name))
 
         for package in self.package_list:
             if isinstance(package, PackageSourceCode):
@@ -129,7 +134,28 @@ class PackageSourceCode(Package):
                 package.resolve_init_py(fully_qualified_name_list, root_package)
                 fully_qualified_name_list.pop()
 
-    def __path_resolve(self, level: int, name: str, module_list: list[str], path: list[str]) -> list[str]:
+        if self.__init_py is not None:
+            self.__init_py.class_list = self.remove_duplicates(self.__init_py.class_list)
+            self.__init_py.function_list = self.remove_duplicates(self.__init_py.function_list)
+
+    @staticmethod
+    def remove_duplicates(original_list):
+        unique_list = []
+
+        for item in original_list:
+            is_duplicate = False
+            for unique_item in unique_list:
+                if item == unique_item:
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                unique_list.append(item)
+
+        return unique_list
+
+    @staticmethod
+    def __path_resolve(level: int, name: str, module_list: list[str], path: list[str]) -> list[str]:
         if level == -1:  # absolute path
             module_list_tmp = module_list[1:]
             module_list_tmp.append(name)

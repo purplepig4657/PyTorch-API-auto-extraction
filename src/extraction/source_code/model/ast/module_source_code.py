@@ -5,9 +5,9 @@ from src.common.model.class_object import ClassObject
 from src.common.model.function import Function
 from src.common.model.source_code.module import Module
 from src.common.model.symbol import Symbol
-from src.extraction.source_code.model.class_object_source_code import ClassObjectSourceCode
+from src.extraction.source_code.model.ast.class_object_source_code import ClassObjectSourceCode
 from src.extraction.source_code.model.file_model.file_leaf import FileLeaf
-from src.extraction.source_code.model.function_source_code import FunctionSourceCode
+from src.extraction.source_code.model.ast.function_source_code import FunctionSourceCode
 
 
 class ModuleSourceCode(Module):
@@ -101,7 +101,7 @@ class ModuleSourceCode(Module):
             self.__recursive_find_function_assign(child, function_assign_list)
         return function_assign_list
 
-    def search(self, fully_qualified_name_list: list[str]) -> Optional[Union[Module, ClassObject, Function]]:
+    def search(self, fully_qualified_name_list: list[str]) -> Optional[Union[Module, ClassObject, list[Function]]]:
         if len(fully_qualified_name_list) == 0:  # it points this module
             return self
 
@@ -113,11 +113,18 @@ class ModuleSourceCode(Module):
             if class_object.symbol.name == target_name:
                 return class_object.search(fully_qualified_name_list[1:])
 
+        function_list: list[Function] = list()
+
         for function in self.function_list:
             if not isinstance(function, FunctionSourceCode):
                 return None
             if function.symbol.name == target_name:
-                return function
+                function_list.append(function)
+
+        if len(function_list) != 0:
+            return function_list
+
+        return None
 
     @property
     def ast(self) -> ast.Module:

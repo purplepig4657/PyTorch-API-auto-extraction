@@ -5,7 +5,7 @@ from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
 from src.common.model.value import Value
-from src.extraction.source_code.model.type_source_code import TypeSourceCode
+from src.extraction.source_code.model.ast.type_source_code import TypeSourceCode
 
 
 class ParameterSourceCode(Parameter):
@@ -30,5 +30,5 @@ class ParameterSourceCode(Parameter):
         else:
             return Value(ast.unparse(self.__default))
 
-    def __extract_value_type(self) -> Optional[Type]:
+    def __extract_value_type(self) -> Type:
         return TypeSourceCode.extract_type(self.__arg.annotation)

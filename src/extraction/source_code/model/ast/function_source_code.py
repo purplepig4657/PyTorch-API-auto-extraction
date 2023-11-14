@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import ast
-from typing import Optional, Type
+from typing import Optional
 
 from src.common.model.function import Function
 from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
-from src.extraction.source_code.model.parameter_source_code import ParameterSourceCode
+from src.common.model.type import Type
+from src.extraction.source_code.model.ast.parameter_source_code import ParameterSourceCode
+from src.extraction.source_code.model.ast.type_source_code import TypeSourceCode
 
 
 class FunctionSourceCode(Function):
@@ -66,8 +68,10 @@ class FunctionSourceCode(Function):
             parameter_list.append(ParameterSourceCode(*arg))
         return parameter_list
 
-    def __extract_return_type(self) -> Optional[Type]:
-        pass
+    def __extract_return_type(self) -> Type:
+        if self.__function_node is None:
+            return TypeSourceCode.none_type()
+        return TypeSourceCode.extract_type(self.__function_node.returns)
 
     def as_name(self, as_name: str) -> FunctionSourceCode:
         return FunctionSourceCode(
@@ -76,3 +80,7 @@ class FunctionSourceCode(Function):
             self.param_list,
             self.return_type
         )
+
+    @property
+    def node(self) -> ast.FunctionDef:
+        return self.__function_node

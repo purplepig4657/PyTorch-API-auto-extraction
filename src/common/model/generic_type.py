@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from functools import reduce
 
 from src.common.model.symbol import Symbol
@@ -15,10 +17,9 @@ class GenericType(Type):
     def generic_list(self) -> list[Type]:
         return self.__generic_list
 
-    def __eq__(self, other: Type) -> bool:
-        if type(other) != "GenericType":
+    def __eq__(self, other: GenericType) -> bool:
+        if not isinstance(other, GenericType):
             return False
-        other: GenericType = other
         return reduce(
             lambda acc, cur: acc and cur,
             [self_item == other_item for self_item, other_item in zip(self.generic_list, other.generic_list)],

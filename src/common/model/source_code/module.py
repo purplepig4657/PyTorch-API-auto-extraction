@@ -35,9 +35,17 @@ class Module:
     def class_list(self) -> list[ClassObject]:
         return self.__class_object_list
 
+    @class_list.setter
+    def class_list(self, class_list: list[ClassObject]):
+        self.__class_object_list = class_list
+
     @property
     def function_list(self) -> list[Function]:
         return self.__function_list
+
+    @function_list.setter
+    def function_list(self, function_list: list[Function]):
+        self.__function_list = function_list
 
     @property
     def source_code(self) -> str:

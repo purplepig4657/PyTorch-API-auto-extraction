@@ -16,7 +16,6 @@ from src.extraction.document.model.parameter_doc import ParameterDoc
 class ClassObjectDoc(ClassObject):
 
     def __init__(self, class_object_name: Symbol, class_object_tag: Tag):
-        print(class_object_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(class_object_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(class_object_tag)
@@ -27,6 +26,10 @@ class ClassObjectDoc(ClassObject):
         method_list: list[Method] = self.__extract_method_list(method_name_list, method_tag_list)
 
         result_parameter_list: list[Parameter] = list[Parameter]()
+
+        for method in method_list:  # Class parameter definition is in __init__ method definition box.
+            if method.symbol.name.split('.')[-1] == '__init__':
+                result_parameter_list.extend(method.param_list)
 
         if len(parameter_list_from_box) != len(parameter_list_from_content):
             print("Warning: parameter count doesn't match.")

@@ -31,13 +31,15 @@ class Type:
                 or other_type.symbol == other_type.__PARSE_ERROR_SYMBOL:
             result_type = self
         else:
-            if self.symbol != other_type.symbol:
-                print("Warning: parameters' default value are not matched.")
+            if self != other_type:
+                print("Warning: Types are not matched.")
             result_type = self
 
         return result_type
 
     def __eq__(self, other: Type) -> bool:
+        if not isinstance(other, Type):
+            return False
         return self.symbol == other.symbol
 
     def __str__(self):

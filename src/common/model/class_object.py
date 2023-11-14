@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from src.common.model.method import Method
 from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
@@ -28,3 +30,16 @@ class ClassObject:
     def __str__(self) -> str:
         return f"{{ \"symbol\": {self.symbol}, \"param_list\": {list(map(str, self.param_list))}, " \
                f"\"method_list\": {list(map(str, self.method_list))} }}"
+
+    def __eq__(self, other: ClassObject):
+        if len(self.param_list) != len(other.param_list):
+            return False
+        for self_parameter, other_parameter in zip(self.param_list, other.param_list):
+            if self_parameter != other_parameter:
+                return False
+        for self_method, other_method in zip(self.method_list, other.method_list):
+            if self_method != other_method:
+                return False
+        if self.symbol != other.symbol:
+            return False
+        return True
