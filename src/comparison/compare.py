@@ -235,7 +235,7 @@ class Compare:
                       f" {doc.symbol} "
                       f"parameter {doc_parameter.symbol}:{doc_parameter.value_type} "
                       f"does not same with {source_code_parameter.value_type} in Source code."
-                      f": {compare_result[1]}, Optional Error")
+                      f": {compare_result[1]}, type mismatch error without optional.")
             return
         # 만약 코드에 Optional이 붙어있고, doc에 optional이 붙어있지 않을 때 -> 에러
         if doc_type.symbol != OPTIONAL_SYMBOL and isinstance(source_code_type, GenericType) \

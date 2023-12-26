@@ -69,9 +69,9 @@ class DocTypeMapping:
 
     @classmethod
     def mapping(cls, type_str: str) -> str:
-        type_str = cls.warning_type_mapping(type_str)
         for key, value in cls.__MAPPING_TABLE.items():
             type_str = re.sub(r'\b' + re.escape(key) + r'\b', value, type_str)
+        type_str = cls.warning_type_mapping(type_str)
         return type_str
 
     @classmethod

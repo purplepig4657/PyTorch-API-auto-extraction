@@ -1,11 +1,9 @@
 import ast
-import re
 from typing import Optional
 
 from lark import LarkError
 
 from src.common.constant.source_code_type_mapping import SourceCodeTypeMapping
-from src.common.constant.type_mapping import MAPPING
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
 from src.extraction.source_code.common.type_parser.source_code_type_parse_tree_transformer import \

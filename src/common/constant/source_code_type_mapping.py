@@ -4,10 +4,6 @@ import re
 class SourceCodeTypeMapping:
 
     __MAPPING_TABLE = {
-        'tuple': 'Tuple',
-        'dict': 'Dict',
-        'list': 'List',
-        'sequence': 'Sequence',
         'torch.layout': 'layout',
         'torch.dtype': 'dtype',
         'torch.device': 'device',
@@ -68,6 +64,10 @@ class SourceCodeTypeMapping:
         'NamedShape': "Union[int, str]",
         'ProcessGroupType': "Optional[Union[ProcessGroup, Tuple[ProcessGroup, ProcessGroup]]]",
         'tensor': 'Tensor',
+        'Tuple': 'tuple',
+        'Dict': 'dict',
+        'List': 'list',
+        'Sequence': 'sequence',
     }
 
     @classmethod

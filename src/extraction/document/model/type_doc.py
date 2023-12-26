@@ -1,10 +1,7 @@
-import re
-
 from bs4 import Tag
 from lark import LarkError
 
 from src.common.constant.doc_type_mapping import DocTypeMapping
-from src.common.constant.type_mapping import MAPPING
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
 from src.extraction.document.common.type_parser.parse_tree_transformer import ParseTreeTransformer
