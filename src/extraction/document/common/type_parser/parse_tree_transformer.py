@@ -37,7 +37,8 @@ class ParseTreeTransformer(Transformer):
 
     # noinspection PyMethodMayBeStatic
     def callable_type_generic(self, items: list[Type]) -> Type:
-        return CallableType(Symbol("Callable"), parameter_type_list=items[:-1], return_type=items[-1])
+        return GenericType(Symbol("Callable"), [GenericType(Symbol(""), items[:-1]), items[-1]])
+        # return CallableType(Symbol("Callable"), parameter_type_list=items[:-1], return_type=items[-1])
 
     # noinspection PyMethodMayBeStatic
     def optional_type_generic(self, items: list[Type]) -> Type:
@@ -49,11 +50,11 @@ class ParseTreeTransformer(Transformer):
 
     # noinspection PyMethodMayBeStatic
     def list_type_generic(self, items: list[Type]) -> Type:
-        return GenericType(Symbol("list"), items)
+        return GenericType(Symbol("List"), items)
 
     # noinspection PyMethodMayBeStatic
     def tuple_type_generic(self, items: list[Type]) -> Type:
-        return GenericType(Symbol("tuple"), items)
+        return GenericType(Symbol("Tuple"), items)
 
     # noinspection PyMethodMayBeStatic
     def generic_type(self, items: list[Type]) -> Type:

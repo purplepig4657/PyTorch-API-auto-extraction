@@ -26,6 +26,9 @@ class Value(Generic[T]):
         return not self.__eq__(other)
 
     def __str__(self) -> str:
+        return str(self.value)
+
+    def to_json(self) -> str:
         if type(self.value) == int:
             return f"{self.value}"
         else:

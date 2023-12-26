@@ -67,7 +67,11 @@ class LibraryDoc(Library):
             torch_functions: ResultSet[Tag] = soup.select(
                 SelectorStringBuilder(class_literal=PyTorchDocConstant.TORCH_FUNCTION_LITERAL).build()
             )
+            torch_methods: ResultSet[Tag] = soup.select(
+                SelectorStringBuilder(class_literal=PyTorchDocConstant.TORCH_METHOD_LITERAL).build()
+            )
             torch_function_list.extend(torch_functions)
+            torch_function_list.extend(torch_methods)
         return torch_function_list
 
     # noinspection PyMethodMayBeStatic

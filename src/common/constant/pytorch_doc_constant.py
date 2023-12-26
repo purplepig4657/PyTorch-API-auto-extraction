@@ -11,4 +11,4 @@ class PyTorchDocConstant:
     TORCH_RETURN_TYPE_FROM_BOX_LITERAL = "sig-return-typehint"
     TORCH_PARAMETER_FROM_CONTENT_LITERAL = "field-list simple"
     # TORCH_DOC_TABLE_LITERAL = "autosummary"
-    ROOT_URL = "https://pytorch.org/docs/stable/"
+    ROOT_URL = "https://pytorch.org/docs/2.0/"

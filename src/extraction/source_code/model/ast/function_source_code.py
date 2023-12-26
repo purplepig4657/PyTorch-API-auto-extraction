@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+import inspect
 import ast
 from typing import Optional
 
@@ -15,8 +17,12 @@ class FunctionSourceCode(Function):
 
     __function_node: ast.FunctionDef
 
+    __fully_qualified_name: str
+    __function_inspect_signature: Optional[inspect.Signature]
+
     def __init__(
             self,
+            last_fully_qualified_name: str,
             function_node: ast.FunctionDef,
             symbol: Symbol = None,
             param_list: list[Parameter] = None,
@@ -25,6 +31,9 @@ class FunctionSourceCode(Function):
         self.__function_node = function_node
         if symbol is None:
             symbol: Symbol = self.__extract_function_name()
+        self.__fully_qualified_name = f"{last_fully_qualified_name}.{symbol.name}" \
+            if last_fully_qualified_name != "" else symbol.name
+        # self.__function_inspect_signature = self.__extract_function_inspect_signature()
         if param_list is None:
             param_list: list[Parameter] = self.__extract_param_list()
         if return_type is None:
@@ -35,6 +44,8 @@ class FunctionSourceCode(Function):
         return Symbol(self.__function_node.name)
 
     def __extract_param_list(self) -> list[Parameter]:
+        # if self.__function_inspect_signature is not None:
+        #     return self.__extract_param_list_with_inspect()
         arguments: ast.arguments = self.__function_node.args
         args: list[ast.arg] = arguments.args
         posonlyargs: list[ast.arg] = arguments.posonlyargs
@@ -69,12 +80,35 @@ class FunctionSourceCode(Function):
         return parameter_list
 
     def __extract_return_type(self) -> Type:
+        # if self.__function_inspect_signature is not None:
+        #     return self.__extract_return_type_with_inspect()
         if self.__function_node is None:
             return TypeSourceCode.none_type()
         return TypeSourceCode.extract_type(self.__function_node.returns)
 
+    def __extract_function_inspect_signature(self) -> Optional[inspect.Signature]:
+        last_fully_qualified_name_tmp = self.__fully_qualified_name.split('.')
+        last_fully_qualified_name = '.'.join(last_fully_qualified_name_tmp[:-1])
+        object_name = last_fully_qualified_name_tmp[-1]
+        try:
+            return inspect.signature(getattr(importlib.import_module(last_fully_qualified_name), object_name))
+        except Exception:
+            return None
+
+    def __extract_param_list_with_inspect(self) -> list[Parameter]:
+        print(self.__fully_qualified_name, self.__function_inspect_signature)
+        return ParameterSourceCode.extract_param_list_with_inspect(self.__function_inspect_signature.parameters)
+
+    def __extract_return_type_with_inspect(self) -> Type:
+        if '->' in str(self.__function_inspect_signature):
+            type_str: str = str(self.__function_inspect_signature).split('->')[1].strip()
+            return TypeSourceCode.extract_type_by_str(type_str)
+        else:
+            return Type.none_type()
+
     def as_name(self, as_name: str) -> FunctionSourceCode:
         return FunctionSourceCode(
+            self.__fully_qualified_name,
             self.__function_node,
             Symbol(as_name),
             self.param_list,

@@ -20,8 +20,11 @@ class ClassObjectSourceCode(ClassObject):
     __method_list: list[Method]
     __param_list: list[Parameter]
 
+    __fully_qualified_name: str
+
     def __init__(
             self,
+            last_fully_qualified_name: str,
             class_node: ast.ClassDef,
             symbol: Symbol = None,
             param_list: list[Parameter] = None,
@@ -29,6 +32,8 @@ class ClassObjectSourceCode(ClassObject):
     ):
         self.__class_node = class_node
         self.__symbol = self.__extract_class_name() if symbol is None else symbol
+        self.__fully_qualified_name = f"{last_fully_qualified_name}.{self.__symbol.name}" \
+            if last_fully_qualified_name != "" else self.__symbol.name
         self.__method_list = self.__extract_method_list() if method_list is None else method_list
         self.__param_list = self.__extract_param_list() if param_list is None else param_list
         super().__init__(self.__symbol, self.__param_list, self.__method_list)
@@ -81,8 +86,11 @@ class ClassObjectSourceCode(ClassObject):
         method_list: list[Method] = list[Method]()
         method_def_list: list[ast.FunctionDef] = self.__collect_method_def()
         for method_def in method_def_list:
-            method_list.append(MethodSourceCode(method_def))
+            method_list.append(MethodSourceCode(self.__fully_qualified_name, method_def))
         return method_list
+
+    def __extract_param_list_with_inspect(self) -> list[Parameter]:
+        pass
 
     def __collect_method_def(self) -> list[ast.FunctionDef]:
         stmts: list[ast.stmt] = self.__class_node.body
@@ -126,6 +134,7 @@ class ClassObjectSourceCode(ClassObject):
 
     def as_name(self, as_name: str) -> ClassObjectSourceCode:
         return ClassObjectSourceCode(
+            self.__fully_qualified_name,
             self.__class_node,
             Symbol(as_name),
             self.param_list,

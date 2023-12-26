@@ -16,6 +16,16 @@ class SourceCodeTypeParseTreeTransformer(Transformer):
 
     # noinspection PyMethodMayBeStatic
     def generic_type(self, items: list[Type]) -> Type:
+        # if items[0].symbol.name == "Union" and items[-1].symbol.name == "None":
+        #     return GenericType(Symbol("Optional"), [GenericType(items[0].symbol.name, items[1:])])
+        if items[0].symbol.name == "Union":
+            union_list: list[Type] = list()
+            for item in items[1:]:
+                if isinstance(item, GenericType) and item.symbol.name == "Union":
+                    union_list.extend(item.generic_list)
+                else:
+                    union_list.append(item)
+            return GenericType(items[0].symbol, union_list)
         return GenericType(items[0].symbol, items[1:])
 
     # noinspection PyMethodMayBeStatic

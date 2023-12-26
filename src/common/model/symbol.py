@@ -17,4 +17,7 @@ class Symbol:
         return self.name == other.name
 
     def __str__(self) -> str:
+        return self.name
+
+    def to_json(self) -> str:
         return f"\"{self.name}\""

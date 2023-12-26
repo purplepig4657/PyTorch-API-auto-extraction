@@ -14,8 +14,12 @@ class ModuleSourceCode(Module):
 
     __ast: ast.Module
 
-    def __init__(self, module_file_leaf: FileLeaf):
+    __fully_qualified_name: str
+
+    def __init__(self, last_fully_qualified_name: str, module_file_leaf: FileLeaf):
         symbol: Symbol = Symbol(module_file_leaf.name)
+        self.__fully_qualified_name = f"{last_fully_qualified_name}.{symbol.name}" \
+            if last_fully_qualified_name != "" else symbol.name
         source_code: str = module_file_leaf.content
         self.__ast = ast.parse(source_code)
         class_object_list: list[ClassObject] = self.__extract_all_class_list()
@@ -26,7 +30,7 @@ class ModuleSourceCode(Module):
         class_list: list[ClassObject] = list[ClassObject]()
         class_def_list: list[ast.ClassDef] = self.__collect_class_def()
         for class_def in class_def_list:
-            class_list.append(ClassObjectSourceCode(class_def))
+            class_list.append(ClassObjectSourceCode(self.__fully_qualified_name, class_def))
         return class_list
 
     def __extract_all_function_list(self) -> list[Function]:
@@ -34,9 +38,10 @@ class ModuleSourceCode(Module):
         function_def_list: list[ast.FunctionDef] = self.__collect_function_def()
         function_assign_list: list[Symbol] = self.__collect_function_assign()
         for function_def in function_def_list:
-            function_list.append(FunctionSourceCode(function_def))
+            function_list.append(FunctionSourceCode(self.__fully_qualified_name, function_def))
         for function_assign in function_assign_list:
             function_list.append(FunctionSourceCode(
+                self.__fully_qualified_name,
                 function_node=None,
                 symbol=function_assign,
                 param_list=[],
@@ -100,6 +105,128 @@ class ModuleSourceCode(Module):
         for child in ast.iter_child_nodes(node):
             self.__recursive_find_function_assign(child, function_assign_list)
         return function_assign_list
+
+    def resolve_import(
+            self,
+            fully_qualified_name_list: list[str],
+            root_package: 'PackageSourceCode'
+    ) -> None:
+        import_from_list: list[ast.ImportFrom] = self.__extract_import_from()
+        for import_from in import_from_list:
+            level: int = import_from.level - 1
+            module: str = import_from.module
+            if module is None:
+                module_list = []
+            else:
+                module_list: list[str] = module.split('.')
+            import_names: list[ast.alias] = import_from.names
+
+            if import_names[0].name == '*':
+                path: list[str] = fully_qualified_name_list.copy()[1:-1]
+                name: str = module_list[-1]
+                resolved_path: list[str] = self.__path_resolve(level, name, module_list[:-1], path)
+                result: Optional[Module] = root_package.search(resolved_path)  # only module can be out.
+                if result is None:
+                    continue
+                function_list_len: int = len(result.function_list)
+                for i in range(function_list_len):
+                    self.add_function(result.function_list[i])
+                class_list_len: int = len(result.class_list)
+                for i in range(class_list_len):
+                    self.add_class_object(result.class_list[i])
+                continue
+
+            for name_alias in import_names:
+                path: list[str] = fully_qualified_name_list.copy()[1:-1]
+                name: str = name_alias.name
+                as_name: str = name_alias.asname if name_alias.asname is not None else name
+                resolved_path: list[str] = self.__path_resolve(level, name, module_list, path)
+                result: Optional[Union[ClassObject, list[Function]]] = root_package.search(resolved_path)
+
+                if result is None:
+                    continue
+                if isinstance(result, ClassObjectSourceCode):
+                    self.add_class_object(result.as_name(as_name))
+                if not isinstance(result, list):
+                    continue
+                for function in result:
+                    if isinstance(function, FunctionSourceCode):
+                        self.add_function(function.as_name(as_name))
+
+        self.class_list = self.remove_duplicates(self.class_list)
+        self.function_list = self.remove_duplicates(self.function_list)
+
+    def resolve_class_inheritance(
+            self,
+            class_object: ClassObjectSourceCode
+    ):
+        class_bases: list[ast.expr] = class_object.node.bases
+        for expr in class_bases:
+            parent_name: Symbol = Symbol(ast.unparse(expr))
+            for same_module_class_object in self.class_list:
+                # 일단 같은 모듈에 있는(import 된 것 포함) class만 상속 가능..
+                # parent class name 에 . 으로 붙여서 상속해놓은 건 제외
+                if same_module_class_object.symbol == parent_name:
+                    for parent_method in same_module_class_object.method_list:
+                        same_name_method_exist = False
+                        for method in class_object.method_list:
+                            if method.symbol == parent_method.symbol:
+                                same_name_method_exist = True
+                                break
+                        if same_name_method_exist:
+                            continue
+                        class_object.add_method(parent_method)
+                    break
+
+    @staticmethod
+    def remove_duplicates(original_list):
+        unique_list = []
+
+        for item in original_list:
+            is_duplicate = False
+            for unique_item in unique_list:
+                if item == unique_item:
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                unique_list.append(item)
+
+        return unique_list
+
+    @staticmethod
+    def __path_resolve(level: int, name: str, module_list: list[str], path: list[str]) -> list[str]:
+        if level == -1:  # absolute path
+            module_list_tmp = module_list[1:]
+            module_list_tmp.append(name)
+            return module_list_tmp
+        elif level == 0:  # relative path
+            path.extend(module_list)
+            path.append(name)
+            return path
+        else:  # relative path
+            path = path[:-level]
+            path.extend(module_list)
+            path.append(name)
+            return path
+
+    def __extract_import_from(self) -> list[ast.ImportFrom]:
+        stmts: list[ast.stmt] = self.ast.body
+        import_from_list: list[ast.ImportFrom] = list[ast.ImportFrom]()
+        for stmt in stmts:
+            self.__recursive_find_import_from(stmt, import_from_list)
+        return import_from_list
+
+    def __recursive_find_import_from(
+            self,
+            node: ast.AST,
+            import_from_list: list[ast.ImportFrom]
+    ) -> list[ast.ImportFrom]:
+        if isinstance(node, ast.ImportFrom):
+            import_from_list.append(node)
+        for child in ast.iter_child_nodes(node):
+            self.__recursive_find_import_from(child, import_from_list)
+        return import_from_list
 
     def search(self, fully_qualified_name_list: list[str]) -> Optional[Union[Module, ClassObject, list[Function]]]:
         if len(fully_qualified_name_list) == 0:  # it points this module

@@ -24,9 +24,10 @@ class CallableType(Type):
             True
         ) and self.return_type == other.return_type
 
-    def __str__(self) -> str:
-        return f"{{ \"symbol\": {self.symbol}, \"parameter_type_list\": {list(map(str, self.parameter_type_list))}, " \
-               f"\"return_type\": {self.return_type} }}"
+    def to_json(self) -> str:
+        return f"{{ \"symbol\": {self.symbol.to_json()}, \"parameter_type_list\": " \
+               f"{[param.to_json() for param in self.parameter_type_list]}, " \
+               f"\"return_type\": {self.return_type.to_json()} }}"
 
     @property
     def parameter_type_list(self) -> list[Type]:

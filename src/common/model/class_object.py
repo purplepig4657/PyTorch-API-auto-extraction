@@ -15,6 +15,9 @@ class ClassObject:
         self.__param_list = param_list
         self.__method_list = method_list
 
+    def add_method(self, method: Method):
+        self.method_list.append(method)
+
     @property
     def symbol(self) -> Symbol:
         return self.__symbol
@@ -27,9 +30,13 @@ class ClassObject:
     def method_list(self) -> list[Method]:
         return self.__method_list
 
+    def to_json(self) -> str:
+        return f"{{ \"symbol\": {self.symbol.to_json()}, \"param_list\": " \
+               f"{[param.to_json() for param in self.param_list]}, " \
+               f"\"method_list\": {[method.to_json() for method in self.method_list]} }}"
+
     def __str__(self) -> str:
-        return f"{{ \"symbol\": {self.symbol}, \"param_list\": {list(map(str, self.param_list))}, " \
-               f"\"method_list\": {list(map(str, self.method_list))} }}"
+        return f"{self.symbol}({list(map(str, self.param_list))})"
 
     def __eq__(self, other: ClassObject):
         if len(self.param_list) != len(other.param_list):

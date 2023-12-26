@@ -20,9 +20,13 @@ class PackageSourceCode(Package):
     __package_file_tree: FileTree
     __init_py: Optional[Module] = None
 
-    def __init__(self, package_file_tree: FileTree):
+    __fully_qualified_name: str
+
+    def __init__(self, last_fully_qualified_name: str, package_file_tree: FileTree):
         self.__package_file_tree = package_file_tree
         symbol: Symbol = Symbol(package_file_tree.name)
+        self.__fully_qualified_name = f"{last_fully_qualified_name}.{symbol.name}" \
+            if last_fully_qualified_name != "" else symbol.name
         package_list: list[Package] = self.__extract_all_package_list()
         module_list: list[Module] = self.__extract_all_module_list()
         super().__init__(symbol, package_list, module_list)
@@ -31,14 +35,14 @@ class PackageSourceCode(Package):
         package_list: list[Package] = list[Package]()
         directories: list[FileTree] = self.__package_file_tree.directories
         for directory in directories:
-            package_list.append(PackageSourceCode(directory))
+            package_list.append(PackageSourceCode(self.__fully_qualified_name, directory))
         return package_list
 
     def __extract_all_module_list(self) -> list[Module]:
         module_list: list[Module] = list[Module]()
         files: list[FileLeaf] = self.__package_file_tree.files
         for file in files:
-            module_source_code: ModuleSourceCode = ModuleSourceCode(file)
+            module_source_code: ModuleSourceCode = ModuleSourceCode(self.__fully_qualified_name, file)
             module_list.append(module_source_code)
             if file.name == "__init__":
                 self.__init_py = module_source_code
@@ -72,7 +76,7 @@ class PackageSourceCode(Package):
 
         return None
 
-    def resolve_init_py(
+    def resolve_import(
             self,
             fully_qualified_name_list: list[str],
             root_package: PackageSourceCode
@@ -80,50 +84,56 @@ class PackageSourceCode(Package):
         for package in self.package_list:
             if isinstance(package, PackageSourceCode):
                 fully_qualified_name_list.append(package.symbol.name)
-                package.resolve_init_py(fully_qualified_name_list, root_package)
+                package.resolve_import(fully_qualified_name_list, root_package)
                 fully_qualified_name_list.pop()
 
-        import_from_list: list[ast.ImportFrom] = self.__extract_import_from()
-        for import_from in import_from_list:
-            level: int = import_from.level - 1
-            module: str = import_from.module
-            if module is None:
-                module_list = []
-            else:
-                module_list: list[str] = module.split('.')
-            import_names: list[ast.alias] = import_from.names
+        for module in self.module_list:
+            if isinstance(module, ModuleSourceCode):
+                fully_qualified_name_list.append(module.symbol.name)
+                module.resolve_import(fully_qualified_name_list, root_package)
+                fully_qualified_name_list.pop()
 
-            if import_names[0].name == '*':
-                path: list[str] = fully_qualified_name_list.copy()[1:]
-                name: str = module_list[-1]
-                resolved_path: list[str] = self.__path_resolve(level, name, module_list[:-1], path)
-                result: Optional[Module] = root_package.search(resolved_path)  # only module can be out.
-                if result is None:
-                    continue
-                function_list_len: int = len(result.function_list)
-                for i in range(function_list_len):
-                    self.__init_py.add_function(result.function_list[i])
-                class_list_len: int = len(result.class_list)
-                for i in range(class_list_len):
-                    self.__init_py.add_class_object(result.class_list[i])
-                continue
-
-            for name_alias in import_names:
-                path: list[str] = fully_qualified_name_list.copy()[1:]
-                name: str = name_alias.name
-                as_name: str = name_alias.asname if name_alias.asname is not None else name
-                resolved_path: list[str] = self.__path_resolve(level, name, module_list, path)
-                result: Optional[Union[ClassObject, list[Function]]] = root_package.search(resolved_path)
-
-                if result is None:
-                    continue
-                if isinstance(result, ClassObjectSourceCode):
-                    self.__init_py.add_class_object(result.as_name(as_name))
-                if not isinstance(result, list):
-                    continue
-                for function in result:
-                    if isinstance(function, FunctionSourceCode):
-                        self.__init_py.add_function(function.as_name(as_name))
+        # import_from_list: list[ast.ImportFrom] = self.__extract_import_from()
+        # for import_from in import_from_list:
+        #     level: int = import_from.level - 1
+        #     module: str = import_from.module
+        #     if module is None:
+        #         module_list = []
+        #     else:
+        #         module_list: list[str] = module.split('.')
+        #     import_names: list[ast.alias] = import_from.names
+        #
+        #     if import_names[0].name == '*':
+        #         path: list[str] = fully_qualified_name_list.copy()[1:]
+        #         name: str = module_list[-1]
+        #         resolved_path: list[str] = self.__path_resolve(level, name, module_list[:-1], path)
+        #         result: Optional[Module] = root_package.search(resolved_path)  # only module can be out.
+        #         if result is None:
+        #             continue
+        #         function_list_len: int = len(result.function_list)
+        #         for i in range(function_list_len):
+        #             self.__init_py.add_function(result.function_list[i])
+        #         class_list_len: int = len(result.class_list)
+        #         for i in range(class_list_len):
+        #             self.__init_py.add_class_object(result.class_list[i])
+        #         continue
+        #
+        #     for name_alias in import_names:
+        #         path: list[str] = fully_qualified_name_list.copy()[1:]
+        #         name: str = name_alias.name
+        #         as_name: str = name_alias.asname if name_alias.asname is not None else name
+        #         resolved_path: list[str] = self.__path_resolve(level, name, module_list, path)
+        #         result: Optional[Union[ClassObject, list[Function]]] = root_package.search(resolved_path)
+        #
+        #         if result is None:
+        #             continue
+        #         if isinstance(result, ClassObjectSourceCode):
+        #             self.__init_py.add_class_object(result.as_name(as_name))
+        #         if not isinstance(result, list):
+        #             continue
+        #         for function in result:
+        #             if isinstance(function, FunctionSourceCode):
+        #                 self.__init_py.add_function(function.as_name(as_name))
 
                 # if isinstance(result, FunctionSourceCode):  # overloading 이 제대로 들어오지 않는 것을 확인 -> 은 아닐 수도
                 #     self.__init_py.add_function(result.as_name(as_name))
@@ -131,12 +141,21 @@ class PackageSourceCode(Package):
         for package in self.package_list:
             if isinstance(package, PackageSourceCode):
                 fully_qualified_name_list.append(package.symbol.name)
-                package.resolve_init_py(fully_qualified_name_list, root_package)
+                package.resolve_import(fully_qualified_name_list, root_package)
                 fully_qualified_name_list.pop()
 
         if self.__init_py is not None:
             self.__init_py.class_list = self.remove_duplicates(self.__init_py.class_list)
             self.__init_py.function_list = self.remove_duplicates(self.__init_py.function_list)
+
+    def resolve_class_inheritance(self):
+        for package in self.package_list:
+            if isinstance(package, PackageSourceCode):
+                package.resolve_class_inheritance()
+        for module in self.module_list:
+            for class_object in module.class_list:
+                if isinstance(class_object, ClassObjectSourceCode) and isinstance(module, ModuleSourceCode):
+                    module.resolve_class_inheritance(class_object)
 
     @staticmethod
     def remove_duplicates(original_list):

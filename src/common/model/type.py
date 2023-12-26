@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Tuple
+
 from src.common.model.symbol import Symbol
 
 
@@ -42,5 +44,18 @@ class Type:
             return False
         return self.symbol == other.symbol
 
-    def __str__(self):
-        return self.symbol.__str__()
+    def equal(self, other: Type) -> Tuple[str, str]:
+        if not isinstance(other, Type):
+            return 'Error', ''
+        if type(self) == 'GenericType':
+            return self.equal(other)
+        if self.symbol == other.symbol:
+            return 'Match', ''
+        else:
+            return 'Error', ''
+
+    def __str__(self) -> str:
+        return str(self.symbol.name)
+
+    def to_json(self):
+        return self.symbol.name

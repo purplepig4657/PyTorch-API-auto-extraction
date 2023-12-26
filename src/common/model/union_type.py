@@ -22,4 +22,8 @@ class UnionType(Type):
         return True
 
     def __str__(self) -> str:
-        return f"{{\"symbol\": {self.symbol}, \"union_list\": {list(map(str, self.union_list))}}}"
+        return f"{self.symbol}{list(map(str, self.union_list))}"
+
+    def to_json(self) -> str:
+        return f"{{\"symbol\": {self.symbol.to_json()}, " \
+               f"\"union_list\": {[union.to_json() for union in self.union_list]}}}"

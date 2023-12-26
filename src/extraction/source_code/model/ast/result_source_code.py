@@ -18,11 +18,12 @@ class ResultSourceCode(Result):
     def __init__(self, root_tree: FileTree):
         self.__root_tree = root_tree
         self.__root_package = self.__extract_root_package()
-        self.__resolve_init_py()
+        self.__resolve_import()
+        self.__resolve_class_inheritance()
         super().__init__(root_package=self.__root_package)
 
     def __extract_root_package(self) -> Package:
-        root_package = PackageSourceCode(self.__root_tree)
+        root_package = PackageSourceCode("", self.__root_tree)
         return root_package
 
     def search(self, fully_qualified_name: Union[str, Symbol]) -> Optional[Union[Module, ClassObject, list[Function]]]:
@@ -37,7 +38,11 @@ class ResultSourceCode(Result):
             root_package: PackageSourceCode = self.__root_package
             return root_package.search(name_split[1:])
 
-    def __resolve_init_py(self) -> None:
+    def __resolve_import(self) -> None:
         package_list: list[Package] = self.__root_package.package_list
         if isinstance(self.__root_package, PackageSourceCode):
-            self.__root_package.resolve_init_py(['torch'], self.__root_package)
+            self.__root_package.resolve_import(['torch'], self.__root_package)
+
+    def __resolve_class_inheritance(self) -> None:
+        if isinstance(self.__root_package, PackageSourceCode):
+            self.__root_package.resolve_class_inheritance()

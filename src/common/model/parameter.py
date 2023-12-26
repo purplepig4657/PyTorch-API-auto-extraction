@@ -57,8 +57,12 @@ class Parameter:
 
         return Parameter(result_symbol, result_default, result_value_type)
 
+    def to_json(self) -> str:
+        return f"{{ \"symbol\": {self.symbol.to_json()}, \"default\": {self.default.to_json()}, " \
+               f"\"value_type\": {self.value_type.to_json()} }}"
+
     def __str__(self) -> str:
-        return f"{{ \"symbol\": {self.symbol}, \"default\": {self.default}, \"value_type\": {self.value_type} }}"
+        return f"{self.symbol}: {self.value_type} = {self.default}"
 
     def __eq__(self, other: Parameter):
         return (

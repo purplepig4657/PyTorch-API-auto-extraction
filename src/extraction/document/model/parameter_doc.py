@@ -68,8 +68,8 @@ class ParameterDoc(Parameter):
         parameter_symbol: Symbol = Symbol(parameter_name)
         if match:
             type_str: str = match.group(1).split(", default")[0]
-            type_str = type_str.replace("(", "[")
-            type_str = type_str.replace(")", "]")
+            # type_str = type_str.replace("(", "[")
+            # type_str = type_str.replace(")", "]")
             parameter_type = TypeDoc.from_content_type_str(type_str=type_str)
         else:
             print("Warning: There is no type in content")
@@ -117,12 +117,12 @@ class ParameterDoc(Parameter):
                 print("Warning: invalid doc, several text tag.")
             name: str = reduce(lambda acc, cur: acc + cur.text, all_span, "")
             parameter_name = Symbol(name)
-            type_tag: Tag = parameter_info[1].find(name="a")
-            if type_tag is not None:
-                parameter_type = TypeDoc.from_box_a_tag(type_tag)
-            else:
-                type_name: str = parameter_info[1].find(name="span").text
-                parameter_type = TypeDoc.from_content_type_str(type_name)
+            # type_tag: Tag = parameter_info[1].find(name="a")
+            # if type_tag is not None:
+            #     parameter_type = TypeDoc.from_box_a_tag(type_tag)
+            # else:
+            type_name: str = parameter_info[1].text
+            parameter_type = TypeDoc.from_content_type_str(type_name)
 
         parameter_default_value_tag = parameter_tag.find(
             attrs={'class', PyTorchDocConstant.TORCH_PARAMETER_DEFAULT_VALUE_FROM_BOX_LITERAL},
