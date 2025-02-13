@@ -1,9 +1,24 @@
 import re
+from typing import Union
+
+from src.common.model.function import Function
+from src.common.model.parameter import Parameter
+from src.common.model.class_object import ClassObject
+from src.common.classified_result import classified_result
 
 
 class DocTypeMapping:
 
     __MAPPING_TABLE = {
+        'int64': 'int',  # Is this warning about builtin type ?
+        'int32': 'int',  # Is this warning about builtin type ?
+        'Dict': 'dict',
+        '_dtype': 'dtype',
+        '_device': 'device',
+        '_qscheme': 'qscheme',
+        '_layout': 'layout',
+        '_size': "Union[torch.Size, List[int], Tuple[int, ...]]",
+        'torch.Size': 'Size',
         'torch.layout': 'layout',
         'torch.dtype': 'dtype',
         'torch.device': 'device',
@@ -11,12 +26,16 @@ class DocTypeMapping:
         'torch.Generator': 'Generator',
         'torch.nn.Module': 'Module',
         'torch.nn.Optimizer': 'Optimizer',
+        'torch.nn.Parameter': 'Parameter',
         'torch._C._monitor.Aggregation': 'Aggregation',
         'torch._C.Value': 'Value',
         'torch.fx.GraphModule': 'GraphModule',
         'torch.jit.ScriptModule': 'ScriptModule',
         'torch._C.PyTorchFileReader': 'PyTorchFileReader',
         'torch.Tensor': 'Tensor',
+        'torch.futures.Future': 'Future',
+        'torch.cuda.memory._CUDAAllocator': '_CUDAAllocator',
+        'torch.utils.hooks.RemovableHandle': 'RemovableHandle',
         '_size_any_t': 'Union[int, Tuple[int, ...]]',
         '_size_1_t': 'Union[int, Tuple[int]]',
         '_size_2_t': 'Union[int, Tuple[int, int]]',
@@ -33,7 +52,6 @@ class DocTypeMapping:
         '_TensorOrTensors': 'Union[torch.Tensor, Sequence[torch.Tensor]]',
         'in_dims_t': 'Union[int, Tuple]',
         'out_dims_t': 'Union[int, Tuple[int, ...]]',
-        '_size': "Union[torch.Size, List[int], Tuple[int, ...]]",
         '_dispatchkey': "Union[str, torch._C.DispatchKey]",
         'FILE_LIKE': 'Union[str, PathLike, BinaryIO, IO[bytes]]',
         'MAP_LOCATION': 'Optional[Union[Callable[[Tensor, str], Tensor], device, str, Dict[str, str]]]',
@@ -46,39 +64,55 @@ class DocTypeMapping:
     }
 
     __WARNING_MAPPING_TABLE = {
+        'any': 'Any',
+        'callable': 'Callable',
+        'generator': 'Generator',
         'Tuple': 'tuple',
-        'Dict': 'dict',
         'List': 'list',
         'Int': 'int',
-        'Sequence': 'sequence',
+        'ints': 'int',
+        'integer': 'int',
+        'Tensors': 'Tensor',
+        'sequence': 'Sequence',
         'iterable': 'Iterable',
         'tensor': 'Tensor',
         'string': 'str',
-        'int64': 'int',
-        'int32': 'int',
         '_int': 'int',
         '_float': 'float',
         '_bool': 'bool',
-        '_dtype': 'dtype',
-        '_device': 'device',
         'builtins.int': 'int',
         'builtins.bool': 'bool',
-        '_qscheme': 'qscheme',
-        '_layout': 'layout',
     }
 
+    __LETTER_CASE_WARNING = ['Tuple', 'List', 'Int', 'sequence', 'iterable', 'any', 'tensor', 'callable', 'generator']
+    __PLURAL_WARNING = ['ints', 'Tensors']
+    __BUILTIN_TYPE_WARNING = ['integer', 'string', '_int', '_float', '_bool', 'builtins.int', 'builtins.bool']
+    __UNKNOWN_DELIMITER = []
+    __UNKNOWN_NON_TYPE_WORD = []
+
     @classmethod
-    def mapping(cls, type_str: str) -> str:
+    def mapping(cls, type_str: str, grand_parent_object: Union[Function, ClassObject], parent_object: Parameter) -> str:
         for key, value in cls.__MAPPING_TABLE.items():
             type_str = re.sub(r'\b' + re.escape(key) + r'\b', value, type_str)
-        type_str = cls.warning_type_mapping(type_str)
+        type_str = cls.warning_type_mapping(type_str, grand_parent_object, parent_object)
         return type_str
 
     @classmethod
-    def warning_type_mapping(cls, type_str: str) -> str:
+    def warning_type_mapping(cls, type_str: str, grand_parent_object: Union[Function, ClassObject], parent_object: Parameter) -> str:
         for key, value in cls.__WARNING_MAPPING_TABLE.items():
             original_str = type_str
             type_str = re.sub(r'\b' + re.escape(key) + r'\b', value, type_str)
             if type_str != original_str:
                 print(f"[Doc Type Mapping Warning] There is {key} -> {value} mapping exist.")
+                if key in cls.__LETTER_CASE_WARNING:
+                    classified_result["warning"]["break_format"]["letter_case"].append(
+                        f"{grand_parent_object.symbol.name}:{parent_object.symbol.name if parent_object is not None else 'return_type'}")
+                elif key in cls.__PLURAL_WARNING:
+                    classified_result["warning"]["break_format"]["plural"].append(
+                        f"{grand_parent_object.symbol.name}:{parent_object.symbol.name if parent_object is not None else 'return_type'}")
+                elif key in cls.__BUILTIN_TYPE_WARNING:
+                    classified_result["warning"]["break_format"]["builtin_type"].append(
+                        f"{grand_parent_object.symbol.name}:{parent_object.symbol.name if parent_object is not None else 'return_type'}")
+
+
         return type_str

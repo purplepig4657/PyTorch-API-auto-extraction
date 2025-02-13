@@ -1,12 +1,17 @@
-from lark import Transformer, Token
+from lark import Transformer, Token, v_args
 
 from src.common.model.callable_type import CallableType
 from src.common.model.generic_type import GenericType
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
+from src.common.classified_result import classified_result
 
 
 class ParseTreeTransformer(Transformer):
+
+    def __init__(self):
+        self.additional_arg = None
+
     # noinspection PyMethodMayBeStatic
     def type(self, items: list[Token]) -> Token:
         return items[0]
@@ -21,7 +26,7 @@ class ParseTreeTransformer(Transformer):
 
     # noinspection PyMethodMayBeStatic
     def weird_optional_type(self, items: list[Type]) -> Type:
-        return GenericType(Symbol("Optional"), items)
+        return GenericType(Symbol("DocumentOptional"), items)
 
     # noinspection PyMethodMayBeStatic
     def weird_required_type(self, items: list[Type]) -> Type:
@@ -30,6 +35,15 @@ class ParseTreeTransformer(Transformer):
     # noinspection PyMethodMayBeStatic
     def union_type(self, items: list[Type]) -> Type:
         return GenericType(Symbol("Union"), items)
+
+    # noinspection PyMethodMayBeStatic
+    def weird_delimeter_union_type(self, items: list[Type]) -> Type:
+        classified_result["warning"]["break_format"]["unknown_delimiter"].append(self.additional_arg)
+        return GenericType(Symbol("Union"), items)
+
+    def transform_with_args(self, tree, additional_arg) -> Type:
+        self.additional_arg = additional_arg
+        return self.transform(tree)
 
     # noinspection PyMethodMayBeStatic
     def union_type_generic(self, items: list[Type]) -> Type:
@@ -50,11 +64,11 @@ class ParseTreeTransformer(Transformer):
 
     # noinspection PyMethodMayBeStatic
     def list_type_generic(self, items: list[Type]) -> Type:
-        return GenericType(Symbol("List"), items)
+        return GenericType(Symbol("list"), items)
 
     # noinspection PyMethodMayBeStatic
     def tuple_type_generic(self, items: list[Type]) -> Type:
-        return GenericType(Symbol("Tuple"), items)
+        return GenericType(Symbol("tuple"), items)
 
     # noinspection PyMethodMayBeStatic
     def generic_type(self, items: list[Type]) -> Type:

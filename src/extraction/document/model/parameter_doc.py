@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from functools import reduce
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 
 from bs4 import Tag, ResultSet
 
@@ -11,32 +11,34 @@ from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
 from src.common.model.type import Type
 from src.common.model.value import Value
+from src.common.model.class_object import ClassObject
+from src.common.model.function import Function
 from src.extraction.document.model.type_doc import TypeDoc
 
 
 class ParameterDoc(Parameter):
 
-    def __init__(self, symbol: Symbol, default: Optional[Value], value_type: Optional[Type]):
-
+    def __init__(self, symbol: Symbol, default: Optional[Value], value_type: Optional[Type], parent_object: Union[ClassObject, Function]):
+        self.parent_object = parent_object
         super().__init__(symbol, default, value_type)
 
     @classmethod
-    def from_box(cls, parameter_tag: Tag) -> ParameterDoc:
-        parameter_name, parameter_type, parameter_default_value = cls.__extract_parameter_info_from_box(parameter_tag)
+    def from_box(cls, parameter_tag: Tag, parent_object: Union[ClassObject, Function]) -> ParameterDoc:
+        parameter_name, parameter_type, parameter_default_value = cls.__extract_parameter_info_from_box(parameter_tag, parent_object)
         # print("## from box")
         # print(parameter_name, parameter_default_value, parameter_type)
-        return cls(parameter_name, parameter_default_value, parameter_type)
+        return cls(parameter_name, parameter_default_value, parameter_type, parent_object)
 
     @classmethod
-    def from_content(cls, parameter_tag: Tag) -> ParameterDoc:
+    def from_content(cls, parameter_tag: Tag, parent_object: Union[ClassObject, Function]) -> ParameterDoc:
         parameter_name, parameter_type, parameter_default_value = \
-            cls.__extract_parameter_info_from_content(parameter_tag)
+            cls.__extract_parameter_info_from_content(parameter_tag, parent_object)
         # print("## from content")
         # print(parameter_name, parameter_default_value, parameter_type)
-        return cls(parameter_name, parameter_default_value, parameter_type)
+        return cls(parameter_name, parameter_default_value, parameter_type, parent_object)
 
     @classmethod
-    def __extract_parameter_info_from_content(cls, parameter_tag: Tag) \
+    def __extract_parameter_info_from_content(cls, parameter_tag: Tag, parent_object: Union[ClassObject, Function]) \
             -> Tuple[Symbol, Optional[Type], Optional[Value[str]]]:
         # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
         # No need to delve deeply this code.
@@ -70,7 +72,8 @@ class ParameterDoc(Parameter):
             type_str: str = match.group(1).split(", default")[0]
             # type_str = type_str.replace("(", "[")
             # type_str = type_str.replace(")", "]")
-            parameter_type = TypeDoc.from_content_type_str(type_str=type_str)
+            tmp_object: Parameter = Parameter(parameter_symbol, parameter_default, parameter_type)
+            parameter_type = TypeDoc.from_content_type_str(type_str=type_str, grand_parent_object=parent_object, parent_object=tmp_object)
         else:
             print("Warning: There is no type in content")
         if default_value is not None:
@@ -84,7 +87,7 @@ class ParameterDoc(Parameter):
         return parameter_symbol, parameter_type, parameter_default
 
     @classmethod
-    def __extract_parameter_info_from_box(cls, parameter_tag: Tag) \
+    def __extract_parameter_info_from_box(cls, parameter_tag: Tag, parent_object: Union[ClassObject, Function]) \
             -> Tuple[Symbol, Optional[Type], Optional[Value[str]]]:
         # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
         # No need to delve deeply this code.
@@ -122,7 +125,8 @@ class ParameterDoc(Parameter):
             #     parameter_type = TypeDoc.from_box_a_tag(type_tag)
             # else:
             type_name: str = parameter_info[1].text
-            parameter_type = TypeDoc.from_content_type_str(type_name)
+            tmp_object: Parameter = Parameter(parameter_name, parameter_default_value, parameter_type)
+            parameter_type = TypeDoc.from_content_type_str(type_name, parent_object, tmp_object)
 
         parameter_default_value_tag = parameter_tag.find(
             attrs={'class', PyTorchDocConstant.TORCH_PARAMETER_DEFAULT_VALUE_FROM_BOX_LITERAL},

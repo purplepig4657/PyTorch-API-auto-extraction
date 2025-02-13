@@ -45,7 +45,9 @@ class GenericType(Type):
                 return 'Error', 'error'
         match, warning, error = 0, 1, 2
         result = 0
+
         # if self.symbol == Symbol('Union'):
+        #
         #     for other_t in other.generic_list:
         #         is_exist = False
         #         for self_t in self.generic_list:
@@ -55,7 +57,6 @@ class GenericType(Type):
         #         if not is_exist:
         #             result = max(result, 2)
         # else:
-
         for self_t, other_t in zip(self.generic_list, other.generic_list):
             equal_result = self_t.equal(other_t)
             if equal_result[0] == 'Match':

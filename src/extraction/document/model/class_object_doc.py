@@ -16,6 +16,7 @@ from src.extraction.document.model.parameter_doc import ParameterDoc
 class ClassObjectDoc(ClassObject):
 
     def __init__(self, class_object_name: Symbol, class_object_tag: Tag):
+        self.symbol = Symbol(class_object_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(class_object_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(class_object_tag)
@@ -89,7 +90,7 @@ class ClassObjectDoc(ClassObject):
     def __extract_parameter_list_from_box(self, parameter_tag_list: list[Tag]) -> list[Parameter]:
         parameter_list: list[Parameter] = list[Parameter]()
         for parameter_tag in parameter_tag_list:
-            parameter_list.append(ParameterDoc.from_box(parameter_tag))
+            parameter_list.append(ParameterDoc.from_box(parameter_tag, self))
         return parameter_list
 
     # noinspection PyMethodMayBeStatic
@@ -168,7 +169,7 @@ class ClassObjectDoc(ClassObject):
         # No need to delve deeply this code.
         parameter_list: list[Parameter] = list[Parameter]()
         for parameter_tag in parameter_tag_list:
-            parameter_list.append(ParameterDoc.from_content(parameter_tag))
+            parameter_list.append(ParameterDoc.from_content(parameter_tag, self))
         return parameter_list
 
     # noinspection PyMethodMayBeStatic

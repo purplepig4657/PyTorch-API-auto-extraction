@@ -28,7 +28,7 @@ class ParameterSourceCode(Parameter):
         if self.__default is None:
             return Value.none_value()
         else:
-            return Value(ast.unparse(self.__default))
+            return Value[str](ast.unparse(self.__default))
 
     def __extract_value_type(self) -> Type:
         return TypeSourceCode.extract_type(self.__arg.annotation)

@@ -16,8 +16,10 @@ class PyTorchSourceCodeRepositoryImpl(PyTorchSourceCodeRepository):
         ext: list[str] = file_name.split(".")
         if len(ext) == 0:
             return False
-        ext: str = ext[-1]
-        return ext == 'py' or ext == 'pyi'
+        ext_without_dot: str = ""
+        for e in ext[1:]:
+            ext_without_dot += e
+        return ext_without_dot == 'py' or ext_without_dot == 'pyi'  # or ext_without_dot == 'pyiin'
 
     def get_source_code_tree(
             self,

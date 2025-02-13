@@ -36,7 +36,7 @@ class Parameter:
     def merge(self, other_parameter: Parameter) -> Parameter:
         if self.symbol != other_parameter.symbol:
             print(self.symbol, other_parameter.symbol)
-            raise RuntimeError("Parameters' symbol are not matched.")
+            raise RuntimeError("Parameters symbol are not matched.")
 
         result_symbol: Symbol = self.symbol
         result_default: Optional[Value] = None
@@ -49,7 +49,7 @@ class Parameter:
             result_default = self.default
         else:
             if self.default != other_parameter.default:
-                print("Warning: parameters' default value are not matched.")
+                print("Warning: parameters default value are not matched.")
             result_default = self.default
 
         # type

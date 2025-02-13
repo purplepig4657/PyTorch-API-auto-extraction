@@ -62,6 +62,7 @@ MAPPING = {
     '_device': 'device',
     '_qscheme': 'qscheme',
     '_layout': 'layout',
+    '_grad_t': 'Union[Tuple[Tensor, ...], Tensor]',
     '_size': "Union[torch.Size, List[int], Tuple[int, ...]]",
     '_dispatchkey': "Union[str, torch._C.DispatchKey]",
     'FILE_LIKE': 'Union[str, PathLike, BinaryIO, IO[bytes]]',
@@ -72,5 +73,7 @@ MAPPING = {
     'Device': "Union[device, str, int, None]",
     'NamedShape': "Union[int, str]",
     'ProcessGroupType': "Optional[Union[ProcessGroup, Tuple[ProcessGroup, ProcessGroup]]]",
+    'T_module': 'Module',
     'tensor': 'Tensor',
+    'DType': 'dtype'
 }

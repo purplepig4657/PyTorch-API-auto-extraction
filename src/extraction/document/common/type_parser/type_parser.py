@@ -13,3 +13,4 @@ class TypeParser:
 
     def parse(self, text: str) -> Tree[Token]:
         return self.__parser.parse(text)
+

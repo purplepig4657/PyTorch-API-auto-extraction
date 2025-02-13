@@ -26,6 +26,11 @@ class Type:
         return self.__symbol
 
     def merge(self, other_type: Type) -> Type:
+
+        if other_type.symbol is not None and other_type.symbol != other_type.__NONE_TYPE_SYMBOL \
+                and other_type.symbol != other_type.__PARSE_ERROR_SYMBOL and other_type != Type.none_type():
+            print(f"box has type: {self.symbol}")
+
         if self.symbol is None or self.symbol == self.__NONE_TYPE_SYMBOL \
                 or self.symbol == self.__PARSE_ERROR_SYMBOL:
             result_type = other_type

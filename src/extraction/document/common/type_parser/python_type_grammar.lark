@@ -8,7 +8,8 @@ type: weird_optional_type
 
 
 _type: t
-    | union_type
+     | union_type
+     | weird_delimeter_union_type
 
 
 t: string
@@ -25,7 +26,9 @@ weird_optional_type: _type "," ("optional" | "Optional")
 
 weird_required_type: _type "," "required"
 
-union_type: t (("or" | "," | ", or") t)*
+weird_delimeter_union_type: t (("or" | "," | ", or") t)*
+
+union_type: t (("or" | ",") t)*
 
 optional_type_generic: "Optional" "[" t ("," t)* "]"
 

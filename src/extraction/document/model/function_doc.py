@@ -14,7 +14,8 @@ from src.extraction.document.model.type_doc import TypeDoc
 class FunctionDoc(Function):
 
     def __init__(self, function_name: Symbol, function_tag: Tag):
-        print(function_name)
+        # print(function_name)
+        self.symbol = Symbol(function_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(function_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(function_tag)
@@ -30,7 +31,7 @@ class FunctionDoc(Function):
         result_return_type: Type
 
         if len(parameter_list_from_box) != len(parameter_list_from_content):
-            print("Warning: parameter count doesn't match.")
+            print(f"Warning: parameter count doesn't match: {function_name}")
 
         while len(parameter_list_from_box) > 0:
             box_parameter: Parameter = parameter_list_from_box[0]
@@ -44,7 +45,7 @@ class FunctionDoc(Function):
                     break
 
             if cont_parameter is None:
-                print(f"Warning: unmatched parameter, {box_parameter.symbol}")
+                print(f"Warning: unmatched parameter, {function_name}, {box_parameter.symbol}")
                 result_parameter_list.append(box_parameter)
             else:
                 result_parameter_list.append(cont_parameter.merge(box_parameter))
@@ -61,7 +62,7 @@ class FunctionDoc(Function):
                     break
 
             if box_parameter is None:
-                print(f"Warning: unmatched parameter, {cont_parameter.symbol}")
+                print(f"Warning: unmatched parameter, {function_name}, {cont_parameter.symbol}")
                 result_parameter_list.append(cont_parameter)
             else:
                 result_parameter_list.append(cont_parameter.merge(box_parameter))
@@ -89,7 +90,7 @@ class FunctionDoc(Function):
     def __extract_parameter_list_from_box(self, parameter_tag_list: list[Tag]) -> list[Parameter]:
         parameter_list: list[Parameter] = list[Parameter]()
         for parameter_tag in parameter_tag_list:
-            parameter_list.append(ParameterDoc.from_box(parameter_tag))
+            parameter_list.append(ParameterDoc.from_box(parameter_tag, self))
         return parameter_list
 
     # noinspection PyMethodMayBeStatic
@@ -111,7 +112,7 @@ class FunctionDoc(Function):
         if return_type_tag is None:
             return Type.none_type()
         else:
-            return TypeDoc.from_box_a_tag(return_type_tag)
+            return TypeDoc.from_box_a_tag(return_type_tag, self, None)
 
     # noinspection PyMethodMayBeStatic
     def __extract_parameter_tag_list_from_content(self, function_tag: Tag) -> list[Tag]:
@@ -186,7 +187,7 @@ class FunctionDoc(Function):
     def __extract_parameter_list_from_content(self, parameter_tag_list: list[Tag]) -> list[Parameter]:
         parameter_list: list[Parameter] = list[Parameter]()
         for parameter_tag in parameter_tag_list:
-            parameter_list.append(ParameterDoc.from_content(parameter_tag))
+            parameter_list.append(ParameterDoc.from_content(parameter_tag, self))
         return parameter_list
 
     # noinspection PyMethodMayBeStatic
@@ -225,4 +226,4 @@ class FunctionDoc(Function):
         if return_type_tag is None:
             return Type.none_type()
         else:
-            return TypeDoc.from_content_type_str(return_type_tag.text)
+            return TypeDoc.from_content_type_str(return_type_tag.text, self, None)

@@ -107,7 +107,13 @@ class ClassObjectSourceCode(ClassObject):
         if isinstance(node, ast.ClassDef):
             return []
         if isinstance(node, ast.FunctionDef):
-            function_def_list.append(node)
+            # Skip if the function has @overload decorator
+            has_overload = any(
+                isinstance(decorator, ast.Name) and decorator.id == 'overload'
+                for decorator in node.decorator_list
+            )
+            if not has_overload:
+                function_def_list.append(node)
             return []
         for child in ast.iter_child_nodes(node):
             self.__recursive_find_method_def(child, function_def_list)

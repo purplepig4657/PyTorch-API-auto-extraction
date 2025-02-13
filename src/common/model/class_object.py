@@ -30,6 +30,10 @@ class ClassObject:
     def method_list(self) -> list[Method]:
         return self.__method_list
 
+    @symbol.setter
+    def symbol(self, symbol):
+        self.__symbol = symbol
+
     def to_json(self) -> str:
         return f"{{ \"symbol\": {self.symbol.to_json()}, \"param_list\": " \
                f"{[param.to_json() for param in self.param_list]}, " \

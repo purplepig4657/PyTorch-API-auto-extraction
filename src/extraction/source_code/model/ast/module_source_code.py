@@ -1,4 +1,5 @@
 import ast
+import re
 from typing import Optional, Union
 
 from src.common.model.class_object import ClassObject
@@ -21,6 +22,8 @@ class ModuleSourceCode(Module):
         self.__fully_qualified_name = f"{last_fully_qualified_name}.{symbol.name}" \
             if last_fully_qualified_name != "" else symbol.name
         source_code: str = module_file_leaf.content
+        pattern = r'\$\{.*?\}'
+        source_code = re.sub(pattern, "pass", source_code)
         self.__ast = ast.parse(source_code)
         class_object_list: list[ClassObject] = self.__extract_all_class_list()
         function_list: list[Function] = self.__extract_all_function_list()
@@ -83,7 +86,13 @@ class ModuleSourceCode(Module):
         if isinstance(node, ast.ClassDef):
             return []
         if isinstance(node, ast.FunctionDef):
-            function_def_list.append(node)
+            # Skip if the function has @overload decorator
+            has_overload = any(
+                isinstance(decorator, ast.Name) and decorator.id == 'overload'
+                for decorator in node.decorator_list
+            )
+            if not has_overload:
+                function_def_list.append(node)
             return []
         for child in ast.iter_child_nodes(node):
             self.__recursive_find_function_def(child, function_def_list)
