@@ -32,6 +32,10 @@ class SourceCodeTypeParseTreeTransformer(Transformer):
         return items[0]
 
     # noinspection PyMethodMayBeStatic
+    def union_type(self, items: list[Type]) -> Type:
+        return GenericType(Symbol("Union"), items)
+
+    # noinspection PyMethodMayBeStatic
     def generic_type(self, items: list[Type]) -> Type:
         # if items[0].symbol.name == "Union" and items[-1].symbol.name == "None":
         #     return GenericType(Symbol("Optional"), [GenericType(items[0].symbol.name, items[1:])])

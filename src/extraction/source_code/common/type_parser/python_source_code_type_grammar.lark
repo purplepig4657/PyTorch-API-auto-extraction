@@ -5,14 +5,17 @@
 type: t
 
 t: string
+ | union_type
  | generic_type
  | list_type
  | const_t
 
-generic_type: t "[" t ("," t)* "]"
+union_type: t ("|" t)*
+
+generic_type: t "[" t ((",") t)* "]"
 
 list_type: "[]"
-         | "[" t ("," t)* "]"
+         | "[" t ((",") t)* "]"
 
 const_t: "'" t "'"
 

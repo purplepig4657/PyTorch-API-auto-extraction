@@ -8,7 +8,7 @@ from src.extraction.repository.pytorch_html_code_api import PyTorchHtmlCodeApi
 class PyTorchHtmlCodeApiImpl(PyTorchHtmlCodeApi):
 
     __FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-    __DATA_DIRECTORY = os.path.join(__FILE_PATH, "cache")
+    __DATA_DIRECTORY = os.path.join(__FILE_PATH, "cache-2.0")
 
     def get_html_code_by_url(self, url: str) -> str:
         is_cached = True
