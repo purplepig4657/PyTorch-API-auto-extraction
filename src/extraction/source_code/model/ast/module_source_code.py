@@ -1,5 +1,4 @@
 import ast
-import re
 from typing import Optional, Union
 
 from src.common.model.class_object import ClassObject
@@ -22,8 +21,6 @@ class ModuleSourceCode(Module):
         self.__fully_qualified_name = f"{last_fully_qualified_name}.{symbol.name}" \
             if last_fully_qualified_name != "" else symbol.name
         source_code: str = module_file_leaf.content
-        pattern = r'\$\{.*?\}'
-        source_code = re.sub(pattern, "pass", source_code)
         self.__ast = ast.parse(source_code)
         class_object_list: list[ClassObject] = self.__extract_all_class_list()
         function_list: list[Function] = self.__extract_all_function_list()

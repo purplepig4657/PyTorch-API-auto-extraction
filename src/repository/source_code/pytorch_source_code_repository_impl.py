@@ -9,7 +9,7 @@ from src.extraction.source_code.repository.pytorch_source_code_repository import
 class PyTorchSourceCodeRepositoryImpl(PyTorchSourceCodeRepository):
 
     __FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-    __PYTORCH_SOURCE_CODE_DIRECTORY = os.path.join(__FILE_PATH, "pytorch-2.0.0/torch")
+    __PYTORCH_SOURCE_CODE_DIRECTORY = os.path.join(__FILE_PATH, "pytorch-2.11.0/torch")
 
     @staticmethod
     def __is_python_file(file_name: str) -> bool:

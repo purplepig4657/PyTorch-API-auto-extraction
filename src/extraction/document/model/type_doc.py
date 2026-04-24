@@ -36,6 +36,7 @@ class TypeDoc(Type):
             parse_tree = cls.type_parser.parse(type_str)
         except LarkError:
             print("Warning: type that in content parsing error.")
+            print(type_str)
             return Type.parse_error_type()
         result: Type = cls.parse_tree_transformer.transform_with_args(parse_tree, 
                             additional_arg=f"{grand_parent_object.symbol.name}:{parent_object.symbol.name if parent_object is not None else 'return_type'}")
@@ -54,6 +55,7 @@ class TypeDoc(Type):
             parse_tree = cls.type_parser.parse(type_str)
         except LarkError:
             print("Warning: type that in content parsing error.")
+            print(type_str)
             return Type.parse_error_type()
         result: Type = cls.parse_tree_transformer.transform_with_args(parse_tree, 
                             additional_arg=f"{grand_parent_object.symbol.name}:{parent_object.symbol.name if parent_object is not None else 'return_type'}")

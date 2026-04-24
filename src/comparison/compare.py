@@ -1,3 +1,4 @@
+import copy
 from typing import Optional, Union
 
 from src.common.model.class_object import ClassObject
@@ -28,7 +29,7 @@ class Compare:
 
         self.__doc_result: ResultDoc = ResultDoc(pytorch_html_code_api=self.__pytorch_html_code_api)
         self.__source_code_result: ResultSourceCode = ResultSourceCode(root_tree=root_tree)
-        self.__result = classified_result
+        self.__result = copy.deepcopy(classified_result)
         self.__print_with_type = False
         self.__type_compare_count = 0
 

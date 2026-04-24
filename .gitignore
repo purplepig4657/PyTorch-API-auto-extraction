@@ -326,3 +326,4 @@ src/test.py
 test*.json
 src/repository/api/cache*
 src/repository/source_code/pytorch-*
+src/repository/source_code/numpy-*

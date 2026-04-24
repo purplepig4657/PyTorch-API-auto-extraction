@@ -9,6 +9,7 @@ from src.common.model.class_object import ClassObject
 from src.common.model.method import Method
 from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
+from src.extraction.document.common.doc_url_utils import DocUrlUtils
 from src.extraction.document.model.method_doc import MethodDoc
 from src.extraction.document.model.parameter_doc import ParameterDoc
 
@@ -16,7 +17,7 @@ from src.extraction.document.model.parameter_doc import ParameterDoc
 class ClassObjectDoc(ClassObject):
 
     def __init__(self, class_object_name: Symbol, class_object_tag: Tag):
-        self.symbol = Symbol(class_object_name)
+        self.symbol = class_object_name if isinstance(class_object_name, Symbol) else Symbol(class_object_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(class_object_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
         parameter_list_from_content: list[Tag] = self.__extract_parameter_tag_list_from_content(class_object_tag)
@@ -31,6 +32,16 @@ class ClassObjectDoc(ClassObject):
         for method in method_list:  # Class parameter definition is in __init__ method definition box.
             if method.symbol.name.split('.')[-1] == '__init__':
                 result_parameter_list.extend(method.param_list)
+
+        if len(parameter_list_from_content) == 0:
+            result_parameter_list.extend(parameter_list_from_box)
+            super().__init__(class_object_name, result_parameter_list, method_list)
+            return
+
+        if len(parameter_list_from_box) == 0:
+            result_parameter_list.extend(parameter_list_from_content)
+            super().__init__(class_object_name, result_parameter_list, method_list)
+            return
 
         if len(parameter_list_from_box) != len(parameter_list_from_content):
             print("Warning: parameter count doesn't match.")
@@ -71,137 +82,131 @@ class ClassObjectDoc(ClassObject):
 
         super().__init__(class_object_name, result_parameter_list, method_list)
 
-    # noinspection PyMethodMayBeStatic
     def __extract_parameter_tag_list_from_box(self, class_object_tag: Tag) -> list[Tag]:
-        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
-        # No need to delve deeply this code.
-        torch_function_object: Tag = class_object_tag.find(
-            attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL},
-            recursive=False
-        )
-        parameter_tag_list: ResultSet[Tag] = torch_function_object.find_all(
-            attrs={'class', PyTorchDocConstant.TORCH_PARAMETER_FROM_BOX_LITERAL},
-            recursive=False
-        )
-
-        return parameter_tag_list
+        torch_function_object: Optional[Tag] = self.__extract_definition_object(class_object_tag)
+        if torch_function_object is None:
+            return []
+        return [
+            child for child in torch_function_object.find_all(recursive=False)
+            if DocUrlUtils.has_class(child, PyTorchDocConstant.TORCH_PARAMETER_FROM_BOX_LITERAL)
+        ]
 
     # noinspection PyMethodMayBeStatic
     def __extract_parameter_list_from_box(self, parameter_tag_list: list[Tag]) -> list[Parameter]:
         parameter_list: list[Parameter] = list[Parameter]()
         for parameter_tag in parameter_tag_list:
-            parameter_list.append(ParameterDoc.from_box(parameter_tag, self))
+            parameter = ParameterDoc.from_box(parameter_tag, self)
+            if parameter.symbol.name in {"*", "/"}:
+                continue
+            parameter_list.append(parameter)
         return parameter_list
 
-    # noinspection PyMethodMayBeStatic
     def __extract_parameter_tag_list_from_content(self, class_object_tag: Tag) -> list[Tag]:
-        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
-        # No need to delve deeply this code.
-        torch_content: Tag = class_object_tag.find(name="dd", recursive=False)
-        torch_content_object: Tag = torch_content.find(
-            attrs={'class', PyTorchDocConstant.TORCH_PARAMETER_FROM_CONTENT_LITERAL},
-            recursive=False
-        )
+        tag_list: list[Tag] = []
+        field_map = self.__extract_field_map(class_object_tag)
 
-        if torch_content_object is None:
-            return list[Tag]()
+        if "Parameters" in field_map:
+            tag_list.extend(self.__extract_parameter_paragraphs(field_map["Parameters"]))
+        if "Keyword Arguments" in field_map:
+            tag_list.extend(self.__extract_parameter_paragraphs(field_map["Keyword Arguments"]))
 
-        content_items: ResultSet[Tag] = torch_content_object.find_all(
-            attrs={'class', "field-odd"},
-            recursive=False
-        )
+        return [item for item in tag_list if isinstance(item, Tag)]
 
-        content_items.extend(torch_content_object.find_all(attrs={'class', "field-even"}, recursive=False))
-
-        parameter_item_index: int = -1
-        for i in range(0, len(content_items), 2):
-            if 'Parameters' in content_items[i].text:
-                parameter_item_index = i
-                break
-
-        keyword_arguments_item_index: int = -1
-        for i in range(0, len(content_items), 2):
-            if 'Keyword Arguments' in content_items[i].text:
-                keyword_arguments_item_index = i
-                break
-
-        tag_list: list[Tag] = list[Tag]()
-        parameter_tag_list: list[Tag] = list[Tag]()
-        keyword_arguments_tag_list: list[Tag] = list[Tag]()
-
-        if parameter_item_index >= 0:
-            # Parameter list is item next sibling of title item.
-            parameter_content_list_item: Tag = content_items[parameter_item_index + 1]
-
-            parameter_content_list_tag: Tag = parameter_content_list_item.find(name="ul", recursive=False)
-            if parameter_content_list_tag is None:
-                parameter_tag_list = list[Tag](parameter_content_list_item)
-            else:
-                parameter_tag_list = list(map(
-                    lambda x: x.find(name="p", recursive=False),
-                    parameter_content_list_tag.find_all(name="li", recursive=False)
-                ))
-
-        if keyword_arguments_item_index >= 0:
-            # Parameter list is item next sibling of title item.
-            keyword_arguments_content_list_item: Tag = content_items[keyword_arguments_item_index + 1]
-
-            keyword_arguments_content_list_tag: Tag = \
-                keyword_arguments_content_list_item.find(name="ul", recursive=False)
-            if keyword_arguments_content_list_tag is None:
-                keyword_arguments_tag_list = list[Tag](keyword_arguments_content_list_item)
-            else:
-                keyword_arguments_tag_list = list(map(
-                    lambda x: x.find(name="p", recursive=False),
-                    keyword_arguments_content_list_tag.find_all(name="li", recursive=False)
-                ))
-
-        tag_list.extend(parameter_tag_list)
-        tag_list.extend(keyword_arguments_tag_list)
-
-        tag_list: list[Tag] = [item for item in tag_list if not isinstance(item, str)]
-
-        return tag_list
-
-    # noinspection PyMethodMayBeStatic
     def __extract_parameter_list_from_content(self, parameter_tag_list: list[Tag]) -> list[Parameter]:
-        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
-        # No need to delve deeply this code.
-        parameter_list: list[Parameter] = list[Parameter]()
+        parameter_list: list[Parameter] = []
         for parameter_tag in parameter_tag_list:
             parameter_list.append(ParameterDoc.from_content(parameter_tag, self))
         return parameter_list
 
-    # noinspection PyMethodMayBeStatic
     def __extract_method_name_list_and_tag_list(self, class_object_tag: Tag) -> Tuple[list[Symbol], list[Tag]]:
-        # Warning: This code is highly dependent on the PyTorch documentation HTML structure.
-        # No need to delve deeply this code.
         class_content: Tag = class_object_tag.find(name="dd", recursive=False)
-        method_tag_list: list[Tag] = class_content.find_all(
-            attrs={'class': PyTorchDocConstant.TORCH_METHOD_LITERAL},
-            recursive=False
-        )
-        result_method_tag_list: list[Tag] = list[Tag]()
-        name_list: list[Symbol] = list[Symbol]()
+        if class_content is None:
+            return [], []
+        method_tag_list: list[Tag] = [
+            child for child in class_content.find_all(recursive=False)
+            if DocUrlUtils.has_class(child, "py") and DocUrlUtils.has_class(child, "method")
+        ]
+        result_method_tag_list: list[Tag] = []
+        name_list: list[Symbol] = []
         if len(method_tag_list) == 0:
             return name_list, method_tag_list
         for torch_method in method_tag_list:
-            torch_method_object: Tag = torch_method.find(
-                attrs={'class', PyTorchDocConstant.TORCH_OBJECT_LITERAL},
-                recursive=False
-            )
+            torch_method_object: Optional[Tag] = self.__extract_definition_object(torch_method)
             if torch_method_object is None:
-                raise RuntimeError("Wrong document")
+                continue
             torch_method_name: str = torch_method_object.get('id')
             if torch_method_name is None:
                 continue
             name_list.append(Symbol(torch_method_name))
             result_method_tag_list.append(torch_method)
-        return name_list, method_tag_list
+        return name_list, result_method_tag_list
 
-    # noinspection PyMethodMayBeStatic
     def __extract_method_list(self, method_name_list: list[Symbol], method_tag_list: list[Tag]) -> list[Method]:
-        method_list: list[Method] = list[Method]()
+        method_list: list[Method] = []
         for name, tag in zip(method_name_list, method_tag_list):
             method_list.append(MethodDoc(name, tag))
         return method_list
+
+    @staticmethod
+    def __extract_definition_object(definition_tag: Tag) -> Optional[Tag]:
+        for child in definition_tag.find_all(recursive=False):
+            if DocUrlUtils.has_class(child, PyTorchDocConstant.TORCH_OBJECT_LITERAL):
+                return child
+        return None
+
+    def __extract_field_map(self, class_object_tag: Tag) -> dict[str, Tag]:
+        torch_content = class_object_tag.find(name="dd", recursive=False)
+        if torch_content is None:
+            return {}
+
+        torch_content_object = torch_content.find(
+            lambda tag: isinstance(tag, Tag) and DocUrlUtils.has_class(tag, "field-list"),
+            recursive=False
+        )
+        if torch_content_object is None:
+            return {}
+
+        if torch_content_object.name == "dl":
+            result: dict[str, Tag] = {}
+            current_dt: Optional[Tag] = None
+            for child in torch_content_object.find_all(recursive=False):
+                if child.name == "dt":
+                    current_dt = child
+                    continue
+                if child.name == "dd" and current_dt is not None:
+                    result[current_dt.text.strip().rstrip(":")] = child
+                    current_dt = None
+            return result
+
+        content_items: list[Tag] = []
+        content_items.extend(torch_content_object.find_all(attrs={"class": "field-odd"}, recursive=False))
+        content_items.extend(torch_content_object.find_all(attrs={"class": "field-even"}, recursive=False))
+
+        result: dict[str, Tag] = {}
+        for i in range(0, len(content_items), 2):
+            if i + 1 >= len(content_items):
+                break
+            result[content_items[i].text.strip().rstrip(":")] = content_items[i + 1]
+        return result
+
+    @staticmethod
+    def __extract_parameter_paragraphs(content_tag: Tag) -> list[Tag]:
+        if content_tag is None:
+            return []
+
+        list_tag = content_tag.find("ul", recursive=False)
+        if list_tag is not None:
+            return [
+                paragraph for paragraph in
+                [item.find("p", recursive=False) for item in list_tag.find_all("li", recursive=False)]
+                if paragraph is not None
+            ]
+
+        paragraph_list = content_tag.find_all("p", recursive=False)
+        if paragraph_list:
+            return paragraph_list
+
+        if content_tag.find("strong", recursive=False) is not None:
+            return [content_tag]
+
+        return []
