@@ -15,8 +15,9 @@ class ResultSourceCode(Result):
     __root_tree: FileTree
     __root_package: Package
 
-    def __init__(self, root_tree: FileTree):
+    def __init__(self, root_tree: FileTree, root_package_name: str):
         self.__root_tree = root_tree
+        self.__root_package_name = root_package_name
         self.__root_package = self.__extract_root_package()
         self.__resolve_import()
         self.__resolve_class_inheritance()
@@ -32,7 +33,7 @@ class ResultSourceCode(Result):
         if type(fully_qualified_name) == Symbol:
             fully_qualified_name = fully_qualified_name.name
         name_split: list[str] = fully_qualified_name.split('.')
-        if name_split[0] != "torch":
+        if name_split[0] != self.__root_package_name:
             return None
         if isinstance(self.__root_package, PackageSourceCode):
             root_package: PackageSourceCode = self.__root_package
@@ -41,7 +42,7 @@ class ResultSourceCode(Result):
     def __resolve_import(self) -> None:
         package_list: list[Package] = self.__root_package.package_list
         if isinstance(self.__root_package, PackageSourceCode):
-            self.__root_package.resolve_import(['torch'], self.__root_package)
+            self.__root_package.resolve_import([self.__root_package_name], self.__root_package)
 
     def __resolve_class_inheritance(self) -> None:
         if isinstance(self.__root_package, PackageSourceCode):

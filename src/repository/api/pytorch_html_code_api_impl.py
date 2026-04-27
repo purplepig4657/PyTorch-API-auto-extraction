@@ -3,26 +3,27 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
+from src.common.library_spec import LibrarySpec, get_library_spec
 from src.extraction.document.common.doc_url_utils import DocUrlUtils
 from src.extraction.repository.pytorch_html_code_api import PyTorchHtmlCodeApi
 
 
 class PyTorchHtmlCodeApiImpl(PyTorchHtmlCodeApi):
 
-    __FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-    __DATA_DIRECTORY = os.path.join(__FILE_PATH, f"cache-{PyTorchDocConstant.VERSION}")
+    _FILE_PATH = os.path.dirname(os.path.abspath(__file__))
 
-    def __init__(self) -> None:
+    def __init__(self, library_spec: LibrarySpec | None = None) -> None:
+        self.__library_spec = get_library_spec("pytorch") if library_spec is None else library_spec
         self.__session = requests.Session()
-        os.makedirs(self.__DATA_DIRECTORY, exist_ok=True)
+        self.__data_directory = os.path.join(self._FILE_PATH, f"cache-{self.__library_spec.key}-{self.__library_spec.version}")
+        os.makedirs(self.__data_directory, exist_ok=True)
 
     def get_html_code_by_url(self, url: str) -> str:
         normalized_url = DocUrlUtils.normalize(url)
         is_cached = True
         uri = self.__url_to_cache_key(normalized_url)
         try:
-            with open(os.path.join(self.__DATA_DIRECTORY, uri + ".txt"), 'r', encoding="utf-8") as f:
+            with open(os.path.join(self.__data_directory, uri + ".txt"), 'r', encoding="utf-8") as f:
                 html = f.read()
         except FileNotFoundError:
             is_cached = False
@@ -33,7 +34,7 @@ class PyTorchHtmlCodeApiImpl(PyTorchHtmlCodeApi):
         response: requests.Response = self.__session.get(normalized_url, timeout=30)
         if response.status_code == 200:
             html: str = response.text
-            with open(os.path.join(self.__DATA_DIRECTORY, uri + ".txt"), 'w', encoding="utf-8") as f:
+            with open(os.path.join(self.__data_directory, uri + ".txt"), 'w', encoding="utf-8") as f:
                 f.write(html)
             return html
         else:
@@ -49,7 +50,7 @@ class PyTorchHtmlCodeApiImpl(PyTorchHtmlCodeApi):
         root_html = self.get_html_code_by_url(normalized_root_url)
         root_soup = BeautifulSoup(root_html, "html.parser")
 
-        queued_urls = DocUrlUtils.extract_reference_api_urls(normalized_root_url, root_soup)
+        queued_urls = DocUrlUtils.extract_reference_api_urls(normalized_root_url, root_soup, self.__library_spec)
         visited_urls: set[str] = {normalized_root_url}
 
         while queued_urls:
@@ -61,7 +62,7 @@ class PyTorchHtmlCodeApiImpl(PyTorchHtmlCodeApi):
             current_html = self.get_html_code_by_url(current_url)
             current_soup = BeautifulSoup(current_html, "html.parser")
 
-            discovered_urls = DocUrlUtils.extract_page_definition_links(current_url, current_soup)
+            discovered_urls = DocUrlUtils.extract_page_definition_links(current_url, current_soup, self.__library_spec)
 
             for discovered_url in discovered_urls:
                 if discovered_url in visited_urls or discovered_url in queued_urls:

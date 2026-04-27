@@ -3,6 +3,7 @@ import glob
 import shutil
 import json
 import sys
+import argparse
 
 def bootstrap_local_site_packages() -> None:
     project_root = os.path.dirname(os.path.abspath(__file__))
@@ -28,16 +29,24 @@ def ensure_supported_python() -> None:
         existing = env.get("PYTHONPATH", "")
         env["PYTHONPATH"] = current_site_packages if existing == "" else f"{current_site_packages}:{existing}"
 
-    os.execvpe(python311, [python311, __file__], env)
+    os.execvpe(python311, [python311, __file__, *sys.argv[1:]], env)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--library", choices=["pytorch", "numpy"], default="pytorch")
+    return parser.parse_args()
 
 
 def main() -> None:
     bootstrap_local_site_packages()
     ensure_supported_python()
     from src.common.classified_result import classified_result
+    from src.common.library_spec import get_library_spec
     from src.comparison.compare import Compare
 
-    compare = Compare(classified_result)
+    args = parse_args()
+    compare = Compare(classified_result, library_spec=get_library_spec(args.library))
     result = compare.compare()
     print(json.dumps(result, indent=2))
 

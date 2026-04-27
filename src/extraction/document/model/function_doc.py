@@ -2,7 +2,7 @@ from typing import Optional
 
 from bs4 import Tag, ResultSet
 
-from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
+from src.common.library_spec import LibrarySpec
 from src.common.model.function import Function
 from src.common.model.parameter import Parameter
 from src.common.model.symbol import Symbol
@@ -14,8 +14,9 @@ from src.extraction.document.model.type_doc import TypeDoc
 
 class FunctionDoc(Function):
 
-    def __init__(self, function_name: Symbol, function_tag: Tag):
+    def __init__(self, function_name: Symbol, function_tag: Tag, library_spec: LibrarySpec):
         # print(function_name)
+        self.__library_spec = library_spec
         self.symbol = function_name if isinstance(function_name, Symbol) else Symbol(function_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(function_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
@@ -88,7 +89,7 @@ class FunctionDoc(Function):
             return []
         return [
             child for child in torch_function_object.find_all(recursive=False)
-            if DocUrlUtils.has_class(child, PyTorchDocConstant.TORCH_PARAMETER_FROM_BOX_LITERAL)
+            if DocUrlUtils.has_class(child, self.__library_spec.parameter_from_box_literal)
         ]
 
     # noinspection PyMethodMayBeStatic
@@ -106,7 +107,7 @@ class FunctionDoc(Function):
         if torch_function_object is None:
             return None
         return torch_function_object.find(
-            lambda tag: isinstance(tag, Tag) and DocUrlUtils.has_class(tag, PyTorchDocConstant.TORCH_RETURN_TYPE_FROM_BOX_LITERAL)
+            lambda tag: isinstance(tag, Tag) and DocUrlUtils.has_class(tag, self.__library_spec.return_type_from_box_literal)
         )
 
     # noinspection PyMethodMayBeStatic
@@ -145,10 +146,9 @@ class FunctionDoc(Function):
         else:
             return TypeDoc.from_content_type_str(return_type_tag.text, self, None)
 
-    @staticmethod
-    def __extract_definition_object(function_tag: Tag) -> Optional[Tag]:
+    def __extract_definition_object(self, function_tag: Tag) -> Optional[Tag]:
         for child in function_tag.find_all(recursive=False):
-            if DocUrlUtils.has_class(child, PyTorchDocConstant.TORCH_OBJECT_LITERAL):
+            if DocUrlUtils.has_class(child, self.__library_spec.object_literal):
                 return child
         return None
 

@@ -1,6 +1,7 @@
 import copy
 from typing import Optional, Union
 
+from src.common.library_spec import LibrarySpec, get_library_spec
 from src.common.model.class_object import ClassObject
 from src.common.model.document.library import Library
 from src.common.model.function import Function
@@ -22,13 +23,20 @@ from src.common.classified_result import classified_result
 
 class Compare:
 
-    def __init__(self, result_dict: dict):
-        self.__pytorch_html_code_api: PyTorchHtmlCodeApi = PyTorchHtmlCodeApiImpl()
-        self.__pytorch_source_code_repository: PyTorchSourceCodeRepository = PyTorchSourceCodeRepositoryImpl()
+    def __init__(self, result_dict: dict, library_spec: LibrarySpec | None = None):
+        self.__library_spec = get_library_spec("pytorch") if library_spec is None else library_spec
+        self.__pytorch_html_code_api: PyTorchHtmlCodeApi = PyTorchHtmlCodeApiImpl(self.__library_spec)
+        self.__pytorch_source_code_repository: PyTorchSourceCodeRepository = PyTorchSourceCodeRepositoryImpl(self.__library_spec)
         root_tree: FileTree = self.__pytorch_source_code_repository.get_source_code_tree()
 
-        self.__doc_result: ResultDoc = ResultDoc(pytorch_html_code_api=self.__pytorch_html_code_api)
-        self.__source_code_result: ResultSourceCode = ResultSourceCode(root_tree=root_tree)
+        self.__doc_result: ResultDoc = ResultDoc(
+            pytorch_html_code_api=self.__pytorch_html_code_api,
+            library_spec=self.__library_spec
+        )
+        self.__source_code_result: ResultSourceCode = ResultSourceCode(
+            root_tree=root_tree,
+            root_package_name=self.__library_spec.root_package_name
+        )
         self.__result = copy.deepcopy(classified_result)
         self.__print_with_type = False
         self.__type_compare_count = 0

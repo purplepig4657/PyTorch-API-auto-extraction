@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 from bs4 import BeautifulSoup, Tag
 from typing import Optional
 
-from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
+from src.common.library_spec import LibrarySpec
 
 
 class DocUrlUtils:
@@ -18,13 +18,13 @@ class DocUrlUtils:
         return urlunparse(normalized)
 
     @staticmethod
-    def is_internal_doc_url(url: str) -> bool:
+    def is_internal_doc_url(url: str, library_spec: LibrarySpec) -> bool:
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
             return False
-        if parsed.netloc != "docs.pytorch.org":
+        if parsed.netloc != library_spec.doc_host:
             return False
-        return parsed.path.startswith(f"/docs/{PyTorchDocConstant.DOC_VERSION_PATH}/")
+        return parsed.path.startswith(library_spec.doc_path_prefix)
 
     @staticmethod
     def is_html_doc_url(url: str) -> bool:
@@ -32,30 +32,44 @@ class DocUrlUtils:
         return parsed.path.endswith(".html") or parsed.path.endswith("/")
 
     @classmethod
-    def is_reference_api_doc_url(cls, url: str) -> bool:
+    def is_reference_api_doc_url(cls, url: str, library_spec: LibrarySpec) -> bool:
         parsed = urlparse(url)
-        excluded_prefixes = [
-            f"/docs/{PyTorchDocConstant.DOC_VERSION_PATH}/user_guide/",
-            f"/docs/{PyTorchDocConstant.DOC_VERSION_PATH}/notes/",
-            f"/docs/{PyTorchDocConstant.DOC_VERSION_PATH}/community/",
-            f"/docs/{PyTorchDocConstant.DOC_VERSION_PATH}/tutorials/",
-            f"/docs/{PyTorchDocConstant.DOC_VERSION_PATH}/install",
-        ]
-        return not any(parsed.path.startswith(prefix) for prefix in excluded_prefixes)
+        return not any(parsed.path.startswith(prefix) for prefix in library_spec.excluded_doc_prefixes)
 
     @classmethod
-    def normalize_if_internal_doc_url(cls, url: str, base_url: Optional[str] = None) -> Optional[str]:
+    def normalize_if_internal_doc_url(
+            cls,
+            url: str,
+            library_spec: LibrarySpec,
+            base_url: Optional[str] = None
+    ) -> Optional[str]:
         normalized = cls.normalize(url, base_url)
-        if not cls.is_internal_doc_url(normalized):
+        if not cls.is_internal_doc_url(normalized, library_spec):
             return None
         if not cls.is_html_doc_url(normalized):
             return None
-        if not cls.is_reference_api_doc_url(normalized):
+        if not cls.is_reference_api_doc_url(normalized, library_spec):
             return None
         return normalized
 
     @classmethod
-    def extract_reference_api_urls(cls, root_url: str, root_soup: BeautifulSoup) -> list[str]:
+    def extract_reference_api_urls(
+            cls,
+            root_url: str,
+            root_soup: BeautifulSoup,
+            library_spec: LibrarySpec
+    ) -> list[str]:
+        if library_spec.key == "numpy":
+            return cls.__extract_numpy_reference_api_urls(root_url, root_soup, library_spec)
+        return cls.__extract_pytorch_reference_api_urls(root_url, root_soup, library_spec)
+
+    @classmethod
+    def __extract_pytorch_reference_api_urls(
+            cls,
+            root_url: str,
+            root_soup: BeautifulSoup,
+            library_spec: LibrarySpec
+    ) -> list[str]:
         anchor = root_soup.find("a", string=lambda text: text is not None and text.strip() == "Reference API")
         if anchor is None:
             return []
@@ -70,7 +84,7 @@ class DocUrlUtils:
             href = child_anchor.get("href")
             if href is None or child_anchor == anchor:
                 continue
-            normalized = cls.normalize_if_internal_doc_url(href, root_url)
+            normalized = cls.normalize_if_internal_doc_url(href, library_spec, root_url)
             if normalized is None or normalized in seen:
                 continue
             seen.add(normalized)
@@ -78,7 +92,31 @@ class DocUrlUtils:
         return result
 
     @classmethod
-    def extract_descendant_doc_urls(cls, current_url: str, soup: BeautifulSoup) -> list[str]:
+    def __extract_numpy_reference_api_urls(
+            cls,
+            root_url: str,
+            root_soup: BeautifulSoup,
+            library_spec: LibrarySpec
+    ) -> list[str]:
+        heading = next(
+            (tag for tag in root_soup.find_all(["h1", "h2", "h3"]) if "Python API" in tag.get_text(" ", strip=True)),
+            None
+        )
+        if heading is None or heading.parent is None:
+            return []
+
+        result: list[str] = []
+        seen: set[str] = set()
+        for anchor in heading.parent.find_all("a", href=True):
+            normalized = cls.normalize_if_internal_doc_url(anchor["href"], library_spec, root_url)
+            if normalized is None or normalized == cls.normalize(root_url) or normalized in seen:
+                continue
+            seen.add(normalized)
+            result.append(normalized)
+        return result
+
+    @classmethod
+    def extract_descendant_doc_urls(cls, current_url: str, soup: BeautifulSoup, library_spec: LibrarySpec) -> list[str]:
         main_tag = soup.find("main")
         if main_tag is None:
             main_tag = soup
@@ -86,7 +124,7 @@ class DocUrlUtils:
         result: list[str] = []
         seen: set[str] = set()
         for anchor in main_tag.find_all("a", href=True):
-            normalized = cls.normalize_if_internal_doc_url(anchor["href"], current_url)
+            normalized = cls.normalize_if_internal_doc_url(anchor["href"], library_spec, current_url)
             if normalized is None or normalized == cls.normalize(current_url):
                 continue
             if normalized in seen:
@@ -96,23 +134,33 @@ class DocUrlUtils:
         return result
 
     @classmethod
-    def extract_page_definition_links(cls, current_url: str, soup: BeautifulSoup) -> list[str]:
+    def extract_page_definition_links(
+            cls,
+            current_url: str,
+            soup: BeautifulSoup,
+            library_spec: LibrarySpec
+    ) -> list[str]:
         result: list[str] = []
         seen: set[str] = set()
 
-        table_selectors = [
-            f"table.{PyTorchDocConstant.TORCH_DOC_TABLE_LITERAL.replace(' ', '.')}",
-            f"table.{PyTorchDocConstant.TORCH_DOC_TABLE_LITERAL_ALTERNATIVE}",
-        ]
-
-        for selector in table_selectors:
+        for selector in library_spec.doc_table_selectors:
             for table_tag in soup.select(selector):
                 for anchor in table_tag.find_all("a", href=True):
-                    normalized = cls.normalize_if_internal_doc_url(anchor["href"], current_url)
+                    normalized = cls.normalize_if_internal_doc_url(anchor["href"], library_spec, current_url)
                     if normalized is None or normalized in seen:
                         continue
                     seen.add(normalized)
                     result.append(normalized)
+
+        if library_spec.key == "numpy":
+            for descendant_url in cls.extract_descendant_doc_urls(current_url, soup, library_spec):
+                parsed = urlparse(descendant_url)
+                if "/generated/" not in parsed.path and not parsed.path.startswith(f"{library_spec.doc_path_prefix}routines"):
+                    continue
+                if descendant_url in seen:
+                    continue
+                seen.add(descendant_url)
+                result.append(descendant_url)
 
         return result
 

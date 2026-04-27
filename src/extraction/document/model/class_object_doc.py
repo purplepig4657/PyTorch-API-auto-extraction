@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 from bs4 import Tag, ResultSet
 
-from src.common.constant.pytorch_doc_constant import PyTorchDocConstant
+from src.common.library_spec import LibrarySpec
 from src.common.model.class_object import ClassObject
 from src.common.model.method import Method
 from src.common.model.parameter import Parameter
@@ -16,7 +16,8 @@ from src.extraction.document.model.parameter_doc import ParameterDoc
 
 class ClassObjectDoc(ClassObject):
 
-    def __init__(self, class_object_name: Symbol, class_object_tag: Tag):
+    def __init__(self, class_object_name: Symbol, class_object_tag: Tag, library_spec: LibrarySpec):
+        self.__library_spec = library_spec
         self.symbol = class_object_name if isinstance(class_object_name, Symbol) else Symbol(class_object_name)
         parameter_tag_list_from_box: list[Tag] = self.__extract_parameter_tag_list_from_box(class_object_tag)
         parameter_list_from_box: list[Parameter] = self.__extract_parameter_list_from_box(parameter_tag_list_from_box)
@@ -88,7 +89,7 @@ class ClassObjectDoc(ClassObject):
             return []
         return [
             child for child in torch_function_object.find_all(recursive=False)
-            if DocUrlUtils.has_class(child, PyTorchDocConstant.TORCH_PARAMETER_FROM_BOX_LITERAL)
+            if DocUrlUtils.has_class(child, self.__library_spec.parameter_from_box_literal)
         ]
 
     # noinspection PyMethodMayBeStatic
@@ -144,13 +145,12 @@ class ClassObjectDoc(ClassObject):
     def __extract_method_list(self, method_name_list: list[Symbol], method_tag_list: list[Tag]) -> list[Method]:
         method_list: list[Method] = []
         for name, tag in zip(method_name_list, method_tag_list):
-            method_list.append(MethodDoc(name, tag))
+            method_list.append(MethodDoc(name, tag, self.__library_spec))
         return method_list
 
-    @staticmethod
-    def __extract_definition_object(definition_tag: Tag) -> Optional[Tag]:
+    def __extract_definition_object(self, definition_tag: Tag) -> Optional[Tag]:
         for child in definition_tag.find_all(recursive=False):
-            if DocUrlUtils.has_class(child, PyTorchDocConstant.TORCH_OBJECT_LITERAL):
+            if DocUrlUtils.has_class(child, self.__library_spec.object_literal):
                 return child
         return None
 

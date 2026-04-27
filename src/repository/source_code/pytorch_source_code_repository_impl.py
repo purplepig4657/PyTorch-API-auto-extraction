@@ -1,6 +1,7 @@
 import os
 from typing import Optional
 
+from src.common.library_spec import LibrarySpec, get_library_spec
 from src.extraction.source_code.model.file_model.file_leaf import FileLeaf
 from src.extraction.source_code.model.file_model.file_tree import FileTree
 from src.extraction.source_code.repository.pytorch_source_code_repository import PyTorchSourceCodeRepository
@@ -8,8 +9,8 @@ from src.extraction.source_code.repository.pytorch_source_code_repository import
 
 class PyTorchSourceCodeRepositoryImpl(PyTorchSourceCodeRepository):
 
-    __FILE_PATH = os.path.dirname(os.path.abspath(__file__))
-    __PYTORCH_SOURCE_CODE_DIRECTORY = os.path.join(__FILE_PATH, "pytorch-2.11.0/torch")
+    def __init__(self, library_spec: LibrarySpec | None = None):
+        self.__library_spec = get_library_spec("pytorch") if library_spec is None else library_spec
 
     @staticmethod
     def __is_python_file(file_name: str) -> bool:
@@ -23,8 +24,10 @@ class PyTorchSourceCodeRepositoryImpl(PyTorchSourceCodeRepository):
 
     def get_source_code_tree(
             self,
-            target_directory: str = __PYTORCH_SOURCE_CODE_DIRECTORY
+            target_directory: str = None
     ) -> Optional[FileTree]:
+        if target_directory is None:
+            target_directory = self.__library_spec.source_code_directory
         current_directory: str = os.getcwd()
         target_directory_name: str = target_directory.split('/')[-1]
         os.chdir(target_directory)

@@ -99,6 +99,7 @@ class SourceCodeTypeMapping:
         type_str = cls.__strip_inner_string_type_refs(type_str)
         type_str = cls.__normalize_annotated(type_str)
         type_str = cls.__normalize_literal(type_str)
+        type_str = cls.__normalize_numpy_literal_alias(type_str)
         type_str = cls.__normalize_empty_tuple_type(type_str)
         type_str = re.sub(r"\bUnpack\[[^\]]+\]", "Any", type_str)
         type_str = re.sub(r"\*\s*([A-Za-z_][A-Za-z0-9_]*)", "Any", type_str)
@@ -134,6 +135,17 @@ class SourceCodeTypeMapping:
         while "Literal[" in type_str:
             start = type_str.find("Literal[")
             bracket_start = start + len("Literal[") - 1
+            bracket_end = cls.__find_matching_bracket(type_str, bracket_start)
+            if bracket_end == -1:
+                break
+            type_str = f"{type_str[:start]}Any{type_str[bracket_end + 1:]}"
+        return type_str
+
+    @classmethod
+    def __normalize_numpy_literal_alias(cls, type_str: str) -> str:
+        while "L[" in type_str:
+            start = type_str.find("L[")
+            bracket_start = start + 1
             bracket_end = cls.__find_matching_bracket(type_str, bracket_start)
             if bracket_end == -1:
                 break
